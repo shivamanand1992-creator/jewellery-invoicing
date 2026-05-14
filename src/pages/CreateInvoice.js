@@ -15,6 +15,7 @@ function CreateInvoice({ token }) {
   ]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showPreview, setShowPreview] = useState(false);
   const navigate = useNavigate();
 
   const addItem = () => {
@@ -32,6 +33,24 @@ function CreateInvoice({ token }) {
     const newItems = [...items];
     newItems[index][field] = value;
     setItems(newItems);
+  };
+
+  const handlePreview = (e) => {
+    e.preventDefault();
+    setError('');
+    
+    // Validate required fields
+    if (!customerName || !goldPrice || !silverPrice) {
+      setError('Please fill in customer name and prices');
+      return;
+    }
+    
+    if (items.some(item => !item.net_weight && item.item_type !== 'Making Charge')) {
+      setError('Please fill in net weight for all items');
+      return;
+    }
+    
+    setShowPreview(true);
   };
 
   const handleSubmit = async (e) => {
@@ -305,12 +324,13 @@ function CreateInvoice({ token }) {
 
         <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', marginTop: '2rem' }}>
           <button
-            type="submit"
+            type="button"
+            onClick={handlePreview}
             className="btn btn-primary"
             disabled={loading}
-            style={{ width: '200px' }}
+            style={{ width: '200px', backgroundColor: '#d4af37' }}
           >
-            {loading ? 'Creating...' : 'Create Invoice'}
+            Preview Invoice
           </button>
           <button
             type="button"
@@ -323,8 +343,97 @@ function CreateInvoice({ token }) {
           </button>
         </div>
       </form>
-    </div>
-  );
-}
 
-export default CreateInvoice;
+      {/* Preview Modal */}
+      {showPreview && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.7)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          zIndex: 1000,
+          padding: '20px'
+        }}>
+          <div style={{
+            backgroundColor: 'white',
+            borderRadius: '8px',
+            maxWidth: '700px',
+            maxHeight: '90vh',
+            overflow: 'auto',
+            padding: '2rem'
+          }}>
+            <h2 style={{ textAlign: 'center', color: '#d4af37', marginBottom: '2rem' }}>Invoice Preview</h2>
+            
+            {/* Invoice Preview Content */}
+            <div style={{ marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '1px solid #ddd' }}>
+              <h3 style={{ color: '#1a1a1a', marginBottom: '1rem' }}>Customer Details</h3>
+              <p><strong>Name:</strong> {customerName}</p>
+              <p><strong>Address:</strong> {customerAddress}</p>
+              <p><strong>State:</strong> {customerState}</p>
+              {customerGstin && <p><strong>GSTIN:</strong> {customerGstin}</p>}
+              {customerPan && <p><strong>PAN:</strong> {customerPan}</p>}
+            </div>
+
+            <div style={{ marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '1px solid #ddd' }}>
+              <h3 style={{ color: '#1a1a1a', marginBottom: '1rem' }}>Prices</h3>
+              <p><strong>Gold Price (per gram):</strong> ₹{goldPrice}</p>
+              <p><strong>Silver Price (per gram):</strong> ₹{silverPrice}</p>
+            </div>
+
+            <div style={{ marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '1px solid #ddd' }}>
+              <h3 style={{ color: '#1a1a1a', marginBottom: '1rem' }}>Items</h3>
+              {items.map((item, idx) => {
+                let itemAmount = 0;
+                if (item.item_type.includes('Gold')) {
+                  const purityMap = { '22K': 0.916, '20K': 0.833, '18K': 0.75 };
+                  const purity = purityMap[item.purity] || 0.916;
+                  itemAmount = parseFloat(item.net_weight || 0) * parseFloat(goldPrice || 0) * purity;
+                } else if (item.item_type.includes('Silver')) {
+                  itemAmount = parseFloat(item.net_weight || 0) * parseFloat(silverPrice || 0) * 0.925;
+                }
+                if (item.gemstone_price) itemAmount += parseFloat(item.gemstone_price);
+                const gstAmount = itemAmount * 0.03;
+                const total = itemAmount + gstAmount;
+
+                return (
+                  <div key={idx} style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#f9f9f9', borderRadius: '4px' }}>
+                    <p><strong>Item {idx + 1}:</strong> {item.item_type}</p>
+                    {item.description && <p><strong>Description:</strong> {item.description}</p>}
+                    <p><strong>Gross Weight:</strong> {item.gross_weight}g | <strong>Net Weight:</strong> {item.net_weight}g</p>
+                    <p><strong>Purity:</strong> {item.purity}</p>
+                    {item.gemstone_price && <p><strong>Gemstone:</strong> ₹{item.gemstone_price}</p>}
+                    <p><strong>Item Value:</strong> ₹{itemAmount.toFixed(2)}</p>
+                    <p><strong>GST (3%):</strong> ₹{gstAmount.toFixed(2)}</p>
+                    <p style={{ fontWeight: 'bold', color: '#d4af37' }}><strong>Total:</strong> ₹{total.toFixed(2)}</p>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Action Buttons */}
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+              <button
+                onClick={handleSubmit}
+                className="btn btn-primary"
+                disabled={loading}
+                style={{ width: '200px' }}
+              >
+                {loading ? 'Creating...' : 'Confirm & Create'}
+              </button>
+              <button
+                onClick={() => setShowPreview(false)}
+                className="btn btn-secondary"
+                disabled={loading}
+                style={{ width: '200px' }}
+              >
+                Edit Invoice
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
