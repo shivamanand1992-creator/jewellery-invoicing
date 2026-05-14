@@ -308,10 +308,12 @@ app.post('/api/invoices', verifyToken, async (req, res) => {
       
       // Insert the item with its making charge
       try {
+        console.log(`Inserting item: type=${item.item_type}, grossWt=${item.gross_weight}, netWt=${item.net_weight}, gemstone=${item.gemstone_price}, amount=${itemAmount}`);
         await pool.query(
           'INSERT INTO invoice_items (invoice_id, item_type, description, gross_weight, net_weight, selling_price_per_gram, gemstone_price, making_charge, amount, gst_rate, gst_amount) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)',
           [invoiceId, item.item_type, item.description || '', item.gross_weight || 0, item.net_weight || 0, item.selling_price_per_gram || 0, item.gemstone_price || 0, makingChargePercent, itemAmount, 3, itemAmount * 0.03]
         );
+        console.log(`✓ Inserted: ${item.item_type}`);
       } catch (itemErr) {
         throw new Error(`Failed to insert item "${item.item_type}": ${itemErr.message}`);
       }
@@ -403,6 +405,11 @@ app.get('/api/invoices/:id/pdf', verifyToken, async (req, res) => {
     const invoice = invoiceResult.rows[0];
     const itemsResult = await pool.query('SELECT * FROM invoice_items WHERE invoice_id = $1', [req.params.id]);
     const items = itemsResult.rows;
+    
+    console.log(`📄 Generating PDF for invoice ${invoice.invoice_number} with ${items.length} items`);
+    items.forEach((item, idx) => {
+      console.log(`  Item ${idx}: ${item.item_type}, grossWt=${item.gross_weight}, netWt=${item.net_weight}, gem=${item.gemstone_price}`);
+    });
     
     const userResult = await pool.query('SELECT * FROM users WHERE id = $1', [req.userId]);
     const user = userResult.rows[0];
