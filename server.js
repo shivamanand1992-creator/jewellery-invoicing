@@ -420,6 +420,16 @@ app.get('/api/invoices/:id/pdf', verifyToken, async (req, res) => {
       console.log('Logo image not found, continuing without it');
     }
     
+    // Add logo watermark in the middle of the page (very light/transparent effect)
+    try {
+      // Add the logo image as watermark - positioned in center with reduced opacity via scaling
+      doc.opacity(0.08); // Very light opacity for watermark effect
+      doc.image(require('path').join(__dirname, 'public/logo-watermark.png'), 120, 280, { width: 300 });
+      doc.opacity(1); // Reset opacity to normal
+    } catch (err) {
+      console.log('Watermark logo not found, continuing');
+    }
+    
     // Header with simple text branding
     doc.fontSize(24).font('Helvetica-Bold').fillColor('#000').text('S.S. JEWELLERS', 150, 40);
     doc.fontSize(9).font('Helvetica').fillColor('#000').text('GOLD & SILVER HALLMARKED JEWELLERY', 150, 70);
@@ -517,18 +527,14 @@ app.get('/api/invoices/:id/pdf', verifyToken, async (req, res) => {
       y += 8;
     });
     
-    // QR Code
+    // QR Code (use actual QR image instead of generating)
     try {
-      if (user.upi_id) {
-        const upiString = `upi://pay?pa=${user.upi_id}&pn=${encodeURIComponent(user.shop_name)}&am=${invoice.total_amount}&tn=Invoice%20${invoice.invoice_number}`;
-        const qrUrl = await QRCode.toDataURL(upiString, { errorCorrectionLevel: 'H', width: 100 });
-        const base64Data = qrUrl.split(',')[1];
-        doc.image(Buffer.from(base64Data, 'base64'), 50, y + 40, { width: 100 });
-        doc.fontSize(9).text(`UPI: ${user.upi_id}`, 160, y + 50);
-      }
+      const qrPath = require('path').join(__dirname, 'public/qr-code-actual.jpg');
+      doc.image(qrPath, 50, y + 20, { width: 120 });
+      doc.fontSize(9).text('Scan & Pay', 50, y + 150);
     } catch (qrErr) {
-      console.error('QR Code generation error:', qrErr);
-      doc.fontSize(8).text('(QR Code unavailable)', 50, y + 40);
+      console.error('QR Code image error:', qrErr);
+      doc.fontSize(8).text('(QR Code unavailable)', 50, y + 20);
     }
     
     doc.end();
