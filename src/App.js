@@ -26,7 +26,14 @@ function App() {
         <nav className="navbar">
           <div className="nav-container">
             <div className="nav-logo-section">
-              <img src="/logo.png" alt="S.S. Jewellers" className="nav-logo" />
+              <div style={{
+                fontSize: '24px',
+                fontWeight: 'bold',
+                color: '#d4af37',
+                letterSpacing: '2px'
+              }}>
+                S.S
+              </div>
               <h1 className="logo">S.S. Jewellers</h1>
             </div>
             {token && (

@@ -34,13 +34,51 @@ function Login({ setToken }) {
   };
 
   return (
-    <div className="container">
-      <div className="card" style={{ maxWidth: '400px', margin: '3rem auto' }}>
-        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
-          <img src="/logo.png" alt="S.S. Jewellers" style={{ height: '80px', marginBottom: '1rem' }} />
-          <h1 style={{ textAlign: 'center', marginBottom: '2rem', color: '#d4af37', fontSize: '24px' }}>
-            S.S. JEWELLERS
+    <div style={{
+      minHeight: '100vh',
+      background: 'linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%)',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: '20px'
+    }}>
+      <div style={{
+        background: 'white',
+        borderRadius: '12px',
+        boxShadow: '0 10px 40px rgba(0,0,0,0.3)',
+        maxWidth: '450px',
+        width: '100%',
+        padding: '3rem'
+      }}>
+        {/* Logo/Branding Section */}
+        <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
+          <div style={{
+            fontSize: '56px',
+            fontWeight: 'bold',
+            color: '#d4af37',
+            marginBottom: '0.5rem',
+            letterSpacing: '3px'
+          }}>
+            S.S
+          </div>
+          <h1 style={{
+            fontSize: '26px',
+            fontWeight: '600',
+            color: '#1a1a1a',
+            margin: '0.5rem 0 0 0',
+            letterSpacing: '1px'
+          }}>
+            JEWELLERS
           </h1>
+          <p style={{
+            fontSize: '11px',
+            color: '#999',
+            marginTop: '0.5rem',
+            letterSpacing: '1px',
+            fontWeight: '500'
+          }}>
+            GOLD & SILVER HALLMARKED
+          </p>
         </div>
 
         {error && <div className="error-message">{error}</div>}
