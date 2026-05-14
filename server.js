@@ -79,6 +79,15 @@ const initDB = async () => {
       );
     `);
 
+    // Migration: Drop old columns if they exist
+    try {
+      await pool.query('ALTER TABLE invoices DROP COLUMN IF EXISTS gold_price');
+      await pool.query('ALTER TABLE invoices DROP COLUMN IF EXISTS silver_price');
+      console.log('Migrated: Dropped old gold_price and silver_price columns');
+    } catch (err) {
+      console.log('Migration info:', err.message);
+    }
+
     await pool.query(`
       CREATE TABLE IF NOT EXISTS invoice_items (
         id SERIAL PRIMARY KEY,
