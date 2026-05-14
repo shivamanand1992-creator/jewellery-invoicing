@@ -16,6 +16,7 @@ function CreateInvoice({ token }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showPreview, setShowPreview] = useState(false);
+  const [previewPdfUrl, setPreviewPdfUrl] = useState(null);
   const navigate = useNavigate();
 
   const addItem = () => {
@@ -383,66 +384,140 @@ function CreateInvoice({ token }) {
           <div style={{
             backgroundColor: 'white',
             borderRadius: '8px',
-            maxWidth: '700px',
+            maxWidth: '800px',
             maxHeight: '90vh',
             overflow: 'auto',
-            padding: '2rem'
+            padding: '2rem',
+            fontFamily: 'Arial, sans-serif'
           }}>
-            <h2 style={{ textAlign: 'center', color: '#d4af37', marginBottom: '2rem' }}>Invoice Preview</h2>
-            
-            {/* Invoice Preview Content */}
-            <div style={{ marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '1px solid #ddd' }}>
-              <h3 style={{ color: '#1a1a1a', marginBottom: '1rem' }}>Customer Details</h3>
-              <p><strong>Name:</strong> {customerName}</p>
-              <p><strong>Address:</strong> {customerAddress}</p>
-              <p><strong>State:</strong> {customerState}</p>
-              {customerGstin && <p><strong>GSTIN:</strong> {customerGstin}</p>}
-              {customerPan && <p><strong>PAN:</strong> {customerPan}</p>}
+            {/* Invoice Preview - Looks like PDF */}
+            <div style={{ marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '2px solid #d4af37' }}>
+              <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
+                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#c9a961', letterSpacing: '2px' }}>S.S</div>
+                <div style={{ fontSize: '14px', color: '#c9a961', letterSpacing: '2px', fontWeight: '500' }}>JEWELLERS</div>
+              </div>
+              <p style={{ textAlign: 'center', margin: '0.5rem 0', fontSize: '12px', fontWeight: 'bold' }}>GOLD & SILVER HALLMARKED JEWELLERY</p>
+              <p style={{ textAlign: 'center', margin: '0.25rem 0', fontSize: '11px' }}>Shop No. 3, 103, Pocket-F22, Sector-3, Rohini, Delhi</p>
+              <p style={{ textAlign: 'center', margin: '0.25rem 0', fontSize: '11px' }}>Phone: 9210112528 | GSTIN: 07AENPA8746C1ZJ</p>
             </div>
 
-            <div style={{ marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '1px solid #ddd' }}>
-              <h3 style={{ color: '#1a1a1a', marginBottom: '1rem' }}>Prices</h3>
-              <p><strong>Gold Price (per gram):</strong> ₹{goldPrice}</p>
-              <p><strong>Silver Price (per gram):</strong> ₹{silverPrice}</p>
+            <h3 style={{ textAlign: 'center', color: '#d4af37', marginBottom: '1.5rem' }}>TAX INVOICE</h3>
+
+            {/* Customer Details */}
+            <div style={{ marginBottom: '1.5rem', padding: '0.75rem', backgroundColor: '#f9f9f9', borderRadius: '4px' }}>
+              <strong>Bill To:</strong>
+              <p style={{ margin: '0.5rem 0 0 0' }}>{customerName}</p>
+              {customerAddress && <p style={{ margin: '0.25rem 0' }}>{customerAddress}</p>}
+              {customerState && <p style={{ margin: '0.25rem 0' }}>State: {customerState}</p>}
+              {customerGstin && <p style={{ margin: '0.25rem 0' }}>GSTIN: {customerGstin}</p>}
+              {customerPan && <p style={{ margin: '0.25rem 0' }}>PAN: {customerPan}</p>}
             </div>
 
-            <div style={{ marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '1px solid #ddd' }}>
-              <h3 style={{ color: '#1a1a1a', marginBottom: '1rem' }}>Items</h3>
-              {items.map((item, idx) => {
-                let itemAmount = 0;
-                if (item.item_type.includes('Gold')) {
-                  const purityMap = { '22K': 0.916, '20K': 0.833, '18K': 0.75 };
-                  const purity = purityMap[item.purity] || 0.916;
-                  itemAmount = parseFloat(item.net_weight || 0) * parseFloat(goldPrice || 0) * purity;
-                } else if (item.item_type.includes('Silver')) {
-                  itemAmount = parseFloat(item.net_weight || 0) * parseFloat(silverPrice || 0) * 0.925;
-                }
-                if (item.gemstone_price) itemAmount += parseFloat(item.gemstone_price);
-                const gstAmount = itemAmount * 0.03;
-                const total = itemAmount + gstAmount;
+            {/* Items Table */}
+            <table style={{ width: '100%', marginBottom: '1.5rem', fontSize: '12px', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ backgroundColor: '#f0f0f0', borderBottom: '2px solid #333' }}>
+                  <th style={{ padding: '0.5rem', textAlign: 'left' }}>Item</th>
+                  <th style={{ padding: '0.5rem', textAlign: 'right' }}>Weight</th>
+                  <th style={{ padding: '0.5rem', textAlign: 'right' }}>Amount</th>
+                  <th style={{ padding: '0.5rem', textAlign: 'right' }}>GST</th>
+                  <th style={{ padding: '0.5rem', textAlign: 'right' }}>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((item, idx) => {
+                  let itemAmount = 0;
+                  if (item.use_flat_price) {
+                    itemAmount = parseFloat(item.flat_price || 0);
+                  } else {
+                    if (item.item_type.includes('Gold')) {
+                      const purityMap = { '22K': 0.916, '20K': 0.833, '18K': 0.75 };
+                      const purity = purityMap[item.purity] || 0.916;
+                      itemAmount = parseFloat(item.net_weight || 0) * parseFloat(goldPrice || 0) * purity;
+                    } else if (item.item_type.includes('Silver')) {
+                      itemAmount = parseFloat(item.net_weight || 0) * parseFloat(silverPrice || 0) * 0.925;
+                    }
+                    if (item.gemstone_price) itemAmount += parseFloat(item.gemstone_price);
+                  }
+                  const gstAmount = itemAmount * 0.03;
+                  const total = itemAmount + gstAmount;
 
-                return (
-                  <div key={idx} style={{ marginBottom: '1rem', padding: '1rem', backgroundColor: '#f9f9f9', borderRadius: '4px' }}>
-                    <p><strong>Item {idx + 1}:</strong> {item.item_type}</p>
-                    {item.description && <p><strong>Description:</strong> {item.description}</p>}
-                    <p><strong>Gross Weight:</strong> {item.gross_weight}g | <strong>Net Weight:</strong> {item.net_weight}g</p>
-                    <p><strong>Purity:</strong> {item.purity}</p>
-                    {item.gemstone_price && <p><strong>Gemstone:</strong> ₹{item.gemstone_price}</p>}
-                    <p><strong>Item Value:</strong> ₹{itemAmount.toFixed(2)}</p>
-                    <p><strong>GST (3%):</strong> ₹{gstAmount.toFixed(2)}</p>
-                    <p style={{ fontWeight: 'bold', color: '#d4af37' }}><strong>Total:</strong> ₹{total.toFixed(2)}</p>
-                  </div>
-                );
-              })}
+                  return (
+                    <tr key={idx} style={{ borderBottom: '1px solid #ddd' }}>
+                      <td style={{ padding: '0.5rem', textAlign: 'left' }}>{item.item_type}</td>
+                      <td style={{ padding: '0.5rem', textAlign: 'right' }}>
+                        {item.use_flat_price ? '-' : `${item.gross_weight}g`}
+                      </td>
+                      <td style={{ padding: '0.5rem', textAlign: 'right' }}>₹{itemAmount.toFixed(2)}</td>
+                      <td style={{ padding: '0.5rem', textAlign: 'right' }}>₹{gstAmount.toFixed(2)}</td>
+                      <td style={{ padding: '0.5rem', textAlign: 'right', fontWeight: 'bold' }}>₹{total.toFixed(2)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+
+            {/* Summary */}
+            <div style={{ marginBottom: '1.5rem', paddingLeft: '50%', fontSize: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '0.5rem', borderBottom: '1px solid #ddd' }}>
+                <span>Subtotal:</span>
+                <span>₹{items.reduce((sum, item) => {
+                  let amt = item.use_flat_price ? parseFloat(item.flat_price || 0) : 0;
+                  if (!item.use_flat_price) {
+                    if (item.item_type.includes('Gold')) {
+                      const purityMap = { '22K': 0.916, '20K': 0.833, '18K': 0.75 };
+                      amt = parseFloat(item.net_weight || 0) * parseFloat(goldPrice || 0) * (purityMap[item.purity] || 0.916);
+                    } else if (item.item_type.includes('Silver')) {
+                      amt = parseFloat(item.net_weight || 0) * parseFloat(silverPrice || 0) * 0.925;
+                    }
+                    if (item.gemstone_price) amt += parseFloat(item.gemstone_price);
+                  }
+                  return sum + amt;
+                }, 0).toFixed(2)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', fontWeight: 'bold', color: '#d4af37' }}>
+                <span>GST (3%):</span>
+                <span>₹{(items.reduce((sum, item) => {
+                  let amt = item.use_flat_price ? parseFloat(item.flat_price || 0) : 0;
+                  if (!item.use_flat_price) {
+                    if (item.item_type.includes('Gold')) {
+                      const purityMap = { '22K': 0.916, '20K': 0.833, '18K': 0.75 };
+                      amt = parseFloat(item.net_weight || 0) * parseFloat(goldPrice || 0) * (purityMap[item.purity] || 0.916);
+                    } else if (item.item_type.includes('Silver')) {
+                      amt = parseFloat(item.net_weight || 0) * parseFloat(silverPrice || 0) * 0.925;
+                    }
+                    if (item.gemstone_price) amt += parseFloat(item.gemstone_price);
+                  }
+                  return sum + amt;
+                }, 0) * 0.03).toFixed(2)}</span>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', fontWeight: 'bold', color: '#1a1a1a', paddingTop: '0.5rem', borderTop: '2px solid #333' }}>
+                <span>TOTAL:</span>
+                <span>₹{(items.reduce((sum, item) => {
+                  let amt = item.use_flat_price ? parseFloat(item.flat_price || 0) : 0;
+                  if (!item.use_flat_price) {
+                    if (item.item_type.includes('Gold')) {
+                      const purityMap = { '22K': 0.916, '20K': 0.833, '18K': 0.75 };
+                      amt = parseFloat(item.net_weight || 0) * parseFloat(goldPrice || 0) * (purityMap[item.purity] || 0.916);
+                    } else if (item.item_type.includes('Silver')) {
+                      amt = parseFloat(item.net_weight || 0) * parseFloat(silverPrice || 0) * 0.925;
+                    }
+                    if (item.gemstone_price) amt += parseFloat(item.gemstone_price);
+                  }
+                  return sum + (amt + amt * 0.03);
+                }, 0).toFixed(2)}</span>
+              </div>
             </div>
 
             {/* Action Buttons */}
-            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+            <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
               <button
-                onClick={handleSubmit}
+                onClick={() => {
+                  handleSubmit(new Event('submit'));
+                }}
                 className="btn btn-primary"
                 disabled={loading}
-                style={{ width: '200px' }}
+                style={{ width: '180px' }}
               >
                 {loading ? 'Creating...' : 'Confirm & Create'}
               </button>
@@ -450,7 +525,7 @@ function CreateInvoice({ token }) {
                 onClick={() => setShowPreview(false)}
                 className="btn btn-secondary"
                 disabled={loading}
-                style={{ width: '200px' }}
+                style={{ width: '180px' }}
               >
                 Edit Invoice
               </button>
