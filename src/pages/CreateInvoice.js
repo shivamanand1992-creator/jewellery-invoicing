@@ -396,7 +396,6 @@ function CreateInvoice({ token }) {
                   <th style={{ padding: '0.5rem', textAlign: 'right' }}>Net Wt</th>
                   <th style={{ padding: '0.5rem', textAlign: 'right' }}>Gem Price</th>
                   <th style={{ padding: '0.5rem', textAlign: 'right' }}>Amount</th>
-                  <th style={{ padding: '0.5rem', textAlign: 'right' }}>GST</th>
                   <th style={{ padding: '0.5rem', textAlign: 'right' }}>Total</th>
                 </tr>
               </thead>
@@ -429,7 +428,6 @@ function CreateInvoice({ token }) {
                         {item.gemstone_price ? `₹${parseFloat(item.gemstone_price).toFixed(2)}` : '-'}
                       </td>
                       <td style={{ padding: '0.5rem', textAlign: 'right' }}>₹{itemAmount.toFixed(2)}</td>
-                      <td style={{ padding: '0.5rem', textAlign: 'right' }}>₹{gstAmount.toFixed(2)}</td>
                       <td style={{ padding: '0.5rem', textAlign: 'right', fontWeight: 'bold' }}>₹{total.toFixed(2)}</td>
                     </tr>
                   );

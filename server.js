@@ -377,8 +377,7 @@ app.get('/api/invoices/:id/pdf', verifyToken, async (req, res) => {
     doc.text('Net Wt', 195, 265);
     doc.text('Gem', 240, 265);
     doc.text('Amount', 280, 265);
-    doc.text('GST', 350, 265);
-    doc.text('Total', 410, 265);
+    doc.text('Total', 380, 265);
     
     doc.moveTo(50, 280).lineTo(520, 280).stroke();
     
@@ -400,8 +399,7 @@ app.get('/api/invoices/:id/pdf', verifyToken, async (req, res) => {
       doc.text(item.net_weight ? item.net_weight.toString() + 'g' : '-', 195, y);
       doc.text(item.gemstone_price && item.gemstone_price > 0 ? `₹${item.gemstone_price.toFixed(2)}` : '-', 240, y);
       doc.text(`₹${item.amount.toFixed(2)}`, 280, y);
-      doc.text(`₹${item.gst_amount.toFixed(2)}`, 350, y);
-      doc.text(`₹${(parseFloat(item.amount) + parseFloat(item.gst_amount)).toFixed(2)}`, 410, y);
+      doc.text(`₹${(parseFloat(item.amount) + parseFloat(item.gst_amount)).toFixed(2)}`, 380, y);
       
       if (item.gst_rate === 3) {
         jewelGSTAmount += parseFloat(item.gst_amount);
@@ -428,6 +426,31 @@ app.get('/api/invoices/:id/pdf', verifyToken, async (req, res) => {
     
     doc.fontSize(10).font('Helvetica-Bold');
     doc.text(`TOTAL: ₹${invoice.total_amount.toFixed(2)}`, 320, y);
+    
+    // Terms & Conditions
+    y += 30;
+    doc.fontSize(9).font('Helvetica-Bold').fillColor('#000');
+    doc.text('Terms & Conditions', 50, y);
+    
+    y += 12;
+    doc.fontSize(7).font('Helvetica').fillColor('#333');
+    const terms = [
+      '1. No Exchange: Goods once sold cannot be exchanged or returned under any circumstances.',
+      '2. Buyback: Valuation based on current market rates, excluding taxes and making charges.',
+      '3. PAN Mandate: Valid PAN card is legally required for cash payments above ₹2 Lakhs.',
+      '4. Refunds: Items are strictly non-refundable for cash; all sales are final.',
+      '5. Jurisdiction: All disputes are subject exclusively to local court jurisdiction.',
+      '6. This is a Tax Invoice as per GST Rules.',
+      '7. All weights and measures are as per standard jewellery norms.',
+      '8. Items once sold cannot be exchanged or refunded.',
+      '9. Making charges are non-refundable.',
+      '10. Payment terms: Due on delivery.'
+    ];
+    
+    terms.forEach(term => {
+      doc.text(term, 50, y, { width: 470, align: 'left' });
+      y += 8;
+    });
     
     // QR Code
     if (user.upi_id) {
