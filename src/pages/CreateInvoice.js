@@ -437,3 +437,8 @@ function CreateInvoice({ token }) {
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+export default CreateInvoice;
