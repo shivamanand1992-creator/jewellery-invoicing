@@ -88,6 +88,18 @@ const initDB = async () => {
       console.log('Migration info:', err.message);
     }
 
+    // Migration: Add customer_pan column if it doesn't exist
+    try {
+      await pool.query('ALTER TABLE invoices ADD COLUMN customer_pan VARCHAR(10)');
+      console.log('Migrated: Added customer_pan column');
+    } catch (err) {
+      if (err.message.includes('already exists')) {
+        console.log('Column customer_pan already exists');
+      } else {
+        console.log('Migration info:', err.message);
+      }
+    }
+
     await pool.query(`
       CREATE TABLE IF NOT EXISTS invoice_items (
         id SERIAL PRIMARY KEY,
