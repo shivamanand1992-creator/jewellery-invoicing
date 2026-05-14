@@ -102,7 +102,38 @@ const initDB = async () => {
   }
 };
 
-initDB();
+// Initialize database and create default user if needed
+const initDBWithDefaultUser = async () => {
+  try {
+    await initDB();
+    
+    // Check if default user exists
+    const userCheck = await pool.query('SELECT * FROM users WHERE email = $1', ['shivamanand1992@gmail.com']);
+    
+    if (userCheck.rows.length === 0) {
+      // Create default user
+      const hashedPassword = await bcrypt.hash('Today@123', 10);
+      await pool.query(
+        'INSERT INTO users (email, password, shop_name, shop_address, shop_phone, gst_number, upi_id, state) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)',
+        [
+          'shivamanand1992@gmail.com',
+          hashedPassword,
+          'S.S. JEWELLERS',
+          'Shop No. 3, 103, Pocket-F22, Sector-3, Rohini, Delhi',
+          '9210112528',
+          '07AENPA8746C1ZJ',
+          'paytm.s1x8mnm@pty',
+          'Delhi'
+        ]
+      );
+      console.log('✅ Default user created');
+    }
+  } catch (err) {
+    console.error('Initialization error:', err);
+  }
+};
+
+initDBWithDefaultUser();
 
 // Routes
 
