@@ -100,6 +100,30 @@ const initDB = async () => {
       }
     }
 
+    // Migration: Add missing columns to invoice_items table
+    const columnsToAdd = [
+      { name: 'gross_weight', type: 'DECIMAL(10, 3)' },
+      { name: 'net_weight', type: 'DECIMAL(10, 3)' },
+      { name: 'selling_price_per_gram', type: 'DECIMAL(10, 2)' },
+      { name: 'gemstone_price', type: 'DECIMAL(10, 2)' },
+      { name: 'making_charge', type: 'DECIMAL(10, 2)' },
+      { name: 'gst_rate', type: 'DECIMAL(5, 2)' },
+      { name: 'gst_amount', type: 'DECIMAL(12, 2)' }
+    ];
+
+    for (const col of columnsToAdd) {
+      try {
+        await pool.query(`ALTER TABLE invoice_items ADD COLUMN ${col.name} ${col.type}`);
+        console.log(`Migrated: Added ${col.name} column to invoice_items`);
+      } catch (err) {
+        if (err.message.includes('already exists')) {
+          console.log(`Column ${col.name} already exists`);
+        } else {
+          console.log(`Migration info for ${col.name}:`, err.message);
+        }
+      }
+    }
+
     await pool.query(`
       CREATE TABLE IF NOT EXISTS invoice_items (
         id SERIAL PRIMARY KEY,
@@ -483,12 +507,7 @@ app.get('/api/invoices/:id/pdf', verifyToken, async (req, res) => {
       '2. Buyback: Valuation based on current market rates, excluding taxes and making charges.',
       '3. PAN Mandate: Valid PAN card is legally required for cash payments above ₹2 Lakhs.',
       '4. Refunds: Items are strictly non-refundable for cash; all sales are final.',
-      '5. Jurisdiction: All disputes are subject exclusively to local court jurisdiction.',
-      '6. This is a Tax Invoice as per GST Rules.',
-      '7. All weights and measures are as per standard jewellery norms.',
-      '8. Items once sold cannot be exchanged or refunded.',
-      '9. Making charges are non-refundable.',
-      '10. Payment terms: Due on delivery.'
+      '5. Jurisdiction: All disputes are subject exclusively to local court jurisdiction.'
     ];
     
     terms.forEach(term => {
