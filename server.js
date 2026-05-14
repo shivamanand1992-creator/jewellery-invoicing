@@ -424,10 +424,10 @@ app.get('/api/invoices/:id/pdf', verifyToken, async (req, res) => {
     try {
       // Add the logo image as watermark - positioned in center with reduced opacity via scaling
       doc.opacity(0.08); // Very light opacity for watermark effect
-      doc.image(require('path').join(__dirname, 'public/logo-watermark.png'), 120, 280, { width: 300 });
+      doc.image(require('path').join(__dirname, 'public/logo-watermark.jpg'), 120, 280, { width: 300 });
       doc.opacity(1); // Reset opacity to normal
     } catch (err) {
-      console.log('Watermark logo not found, continuing');
+      console.log('Watermark logo not found, continuing:', err.message);
     }
     
     // Header with simple text branding
@@ -529,7 +529,7 @@ app.get('/api/invoices/:id/pdf', verifyToken, async (req, res) => {
     
     // QR Code (use actual QR image instead of generating)
     try {
-      const qrPath = require('path').join(__dirname, 'public/qr-code-actual.jpg');
+      const qrPath = require('path').join(__dirname, 'public/qr-code-actual-large.jpg');
       doc.image(qrPath, 50, y + 20, { width: 120 });
       doc.fontSize(9).text('Scan & Pay', 50, y + 150);
     } catch (qrErr) {
