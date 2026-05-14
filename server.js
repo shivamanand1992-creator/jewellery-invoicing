@@ -407,6 +407,7 @@ app.get('/api/invoices/:id/pdf', verifyToken, async (req, res) => {
     const items = itemsResult.rows;
     
     console.log(`📄 Generating PDF for invoice ${invoice.invoice_number} with ${items.length} items`);
+    console.log(`Shop info: ${user.shop_name}, GSTIN: ${user.gst_number}`);
     items.forEach((item, idx) => {
       console.log(`  Item ${idx}: ${item.item_type}, grossWt=${item.gross_weight}, netWt=${item.net_weight}, gem=${item.gemstone_price}`);
     });
