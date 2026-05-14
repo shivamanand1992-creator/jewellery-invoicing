@@ -11,7 +11,7 @@ function CreateInvoice({ token }) {
   const [goldPrice, setGoldPrice] = useState('');
   const [silverPrice, setSilverPrice] = useState('');
   const [items, setItems] = useState([
-    { item_type: 'Gold Ring', description: '', gross_weight: '', net_weight: '', purity: '22K', gemstone_price: '', making_charge_percent: '' }
+    { item_type: 'Gold Ring', description: '', gross_weight: '', net_weight: '', purity: '22K', gemstone_price: '', making_charge_percent: '', flat_price: '', use_flat_price: false }
   ]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -21,7 +21,7 @@ function CreateInvoice({ token }) {
   const addItem = () => {
     setItems([
       ...items,
-      { item_type: 'Gold Ring', description: '', gross_weight: '', net_weight: '', purity: '22K', gemstone_price: '', making_charge_percent: '' }
+      { item_type: 'Gold Ring', description: '', gross_weight: '', net_weight: '', purity: '22K', gemstone_price: '', making_charge_percent: '', flat_price: '', use_flat_price: false }
     ]);
   };
 
@@ -76,7 +76,9 @@ function CreateInvoice({ token }) {
             net_weight: item.net_weight ? parseFloat(item.net_weight) : 0,
             purity: item.purity,
             gemstone_price: item.gemstone_price ? parseFloat(item.gemstone_price) : 0,
-            making_charge_percent: item.making_charge_percent ? parseFloat(item.making_charge_percent) : 0
+            making_charge_percent: item.making_charge_percent ? parseFloat(item.making_charge_percent) : 0,
+            flat_price: item.flat_price ? parseFloat(item.flat_price) : 0,
+            use_flat_price: item.use_flat_price
           }))
         },
         {
@@ -234,57 +236,85 @@ function CreateInvoice({ token }) {
 
               {item.item_type !== 'Making Charge' && (
                 <>
-                  <div className="grid">
-                    <div className="form-group">
-                      <label>Gross Weight (grams)</label>
+                  <div className="form-group" style={{ marginBottom: '1rem' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
                       <input
-                        type="number"
-                        step="0.01"
-                        value={item.gross_weight}
-                        onChange={(e) => handleItemChange(index, 'gross_weight', e.target.value)}
+                        type="checkbox"
+                        checked={item.use_flat_price}
+                        onChange={(e) => handleItemChange(index, 'use_flat_price', e.target.checked)}
                         disabled={loading}
                       />
-                    </div>
-
-                    <div className="form-group">
-                      <label>Net Weight (grams)</label>
-                      <input
-                        type="number"
-                        step="0.01"
-                        value={item.net_weight}
-                        onChange={(e) => handleItemChange(index, 'net_weight', e.target.value)}
-                        disabled={loading}
-                      />
-                    </div>
+                      <span>Use flat price (for Silver 925, etc.)</span>
+                    </label>
                   </div>
 
-                  <div className="grid">
-                    <div className="form-group">
-                      <label>Purity</label>
-                      <select
-                        value={item.purity}
-                        onChange={(e) => handleItemChange(index, 'purity', e.target.value)}
-                        disabled={loading}
-                      >
-                        <option>22K</option>
-                        <option>20K</option>
-                        <option>18K</option>
-                        <option>925</option>
-                      </select>
-                    </div>
+                  {!item.use_flat_price ? (
+                    <>
+                      <div className="grid">
+                        <div className="form-group">
+                          <label>Gross Weight (grams)</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={item.gross_weight}
+                            onChange={(e) => handleItemChange(index, 'gross_weight', e.target.value)}
+                            disabled={loading}
+                          />
+                        </div>
 
+                        <div className="form-group">
+                          <label>Net Weight (grams)</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={item.net_weight}
+                            onChange={(e) => handleItemChange(index, 'net_weight', e.target.value)}
+                            disabled={loading}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="grid">
+                        <div className="form-group">
+                          <label>Purity</label>
+                          <select
+                            value={item.purity}
+                            onChange={(e) => handleItemChange(index, 'purity', e.target.value)}
+                            disabled={loading}
+                          >
+                            <option>22K</option>
+                            <option>20K</option>
+                            <option>18K</option>
+                            <option>925</option>
+                          </select>
+                        </div>
+
+                        <div className="form-group">
+                          <label>Gemstone Price (if any)</label>
+                          <input
+                            type="number"
+                            step="0.01"
+                            value={item.gemstone_price}
+                            onChange={(e) => handleItemChange(index, 'gemstone_price', e.target.value)}
+                            placeholder="0"
+                            disabled={loading}
+                          />
+                        </div>
+                      </div>
+                    </>
+                  ) : (
                     <div className="form-group">
-                      <label>Gemstone Price (if any)</label>
+                      <label>Total Price (₹)</label>
                       <input
                         type="number"
                         step="0.01"
-                        value={item.gemstone_price}
-                        onChange={(e) => handleItemChange(index, 'gemstone_price', e.target.value)}
-                        placeholder="0"
+                        value={item.flat_price}
+                        onChange={(e) => handleItemChange(index, 'flat_price', e.target.value)}
+                        placeholder="Enter total price for this item"
                         disabled={loading}
                       />
                     </div>
-                  </div>
+                  )}
                 </>
               )}
 

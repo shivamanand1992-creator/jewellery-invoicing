@@ -211,21 +211,27 @@ app.post('/api/invoices', verifyToken, async (req, res) => {
     // Calculate and insert items
     let jewelTotal = 0; // Total jewellery value before making charge
     
-    // First pass: calculate jewellery totals using NET WEIGHT
+    // First pass: calculate jewellery totals using NET WEIGHT or FLAT PRICE
     for (const item of items) {
       if (item.item_type !== 'Making Charge') {
         let itemAmount = 0;
-        // Calculate jewellery value using NET WEIGHT
-        if (item.item_type === 'Gold' || item.item_type === 'Gold Ring' || item.item_type.includes('Gold')) {
-          const purityMap = { '22K': 0.916, '20K': 0.833, '18K': 0.75 };
-          const purity = purityMap[item.purity] || 0.916;
-          itemAmount = parseFloat(item.net_weight) * gold_price * purity;
-        } else if (item.item_type === 'Silver' || item.item_type.includes('Silver')) {
-          itemAmount = parseFloat(item.net_weight) * silver_price * 0.925;
-        }
         
-        if (item.gemstone_price) {
-          itemAmount += parseFloat(item.gemstone_price);
+        if (item.use_flat_price) {
+          // Use flat price directly
+          itemAmount = parseFloat(item.flat_price) || 0;
+        } else {
+          // Calculate jewellery value using NET WEIGHT
+          if (item.item_type === 'Gold' || item.item_type === 'Gold Ring' || item.item_type.includes('Gold')) {
+            const purityMap = { '22K': 0.916, '20K': 0.833, '18K': 0.75 };
+            const purity = purityMap[item.purity] || 0.916;
+            itemAmount = parseFloat(item.net_weight) * gold_price * purity;
+          } else if (item.item_type === 'Silver' || item.item_type.includes('Silver')) {
+            itemAmount = parseFloat(item.net_weight) * silver_price * 0.925;
+          }
+          
+          if (item.gemstone_price) {
+            itemAmount += parseFloat(item.gemstone_price);
+          }
         }
         
         jewelTotal += itemAmount;
@@ -242,17 +248,23 @@ app.post('/api/invoices', verifyToken, async (req, res) => {
         itemAmount = parseFloat(item.making_charge) || 0;
       } else {
         gstRate = 3;
-        // Calculate jewellery value using NET WEIGHT
-        if (item.item_type === 'Gold' || item.item_type === 'Gold Ring' || item.item_type.includes('Gold')) {
-          const purityMap = { '22K': 0.916, '20K': 0.833, '18K': 0.75 };
-          const purity = purityMap[item.purity] || 0.916;
-          itemAmount = parseFloat(item.net_weight) * gold_price * purity;
-        } else if (item.item_type === 'Silver' || item.item_type.includes('Silver')) {
-          itemAmount = parseFloat(item.net_weight) * silver_price * 0.925;
-        }
         
-        if (item.gemstone_price) {
-          itemAmount += parseFloat(item.gemstone_price);
+        if (item.use_flat_price) {
+          // Use flat price directly
+          itemAmount = parseFloat(item.flat_price) || 0;
+        } else {
+          // Calculate jewellery value using NET WEIGHT
+          if (item.item_type === 'Gold' || item.item_type === 'Gold Ring' || item.item_type.includes('Gold')) {
+            const purityMap = { '22K': 0.916, '20K': 0.833, '18K': 0.75 };
+            const purity = purityMap[item.purity] || 0.916;
+            itemAmount = parseFloat(item.net_weight) * gold_price * purity;
+          } else if (item.item_type === 'Silver' || item.item_type.includes('Silver')) {
+            itemAmount = parseFloat(item.net_weight) * silver_price * 0.925;
+          }
+          
+          if (item.gemstone_price) {
+            itemAmount += parseFloat(item.gemstone_price);
+          }
         }
       }
       
