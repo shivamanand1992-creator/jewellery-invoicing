@@ -25,7 +25,10 @@ function App() {
       <div className="app">
         <nav className="navbar">
           <div className="nav-container">
-            <h1 className="logo">S.S. Jewellers</h1>
+            <div className="nav-logo-section">
+              <img src="/logo.png" alt="S.S. Jewellers" className="nav-logo" />
+              <h1 className="logo">S.S. Jewellers</h1>
+            </div>
             {token && (
               <button onClick={handleLogout} className="logout-btn">
                 Logout

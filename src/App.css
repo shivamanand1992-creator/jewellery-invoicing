@@ -30,6 +30,18 @@ body {
   align-items: center;
 }
 
+.nav-logo-section {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.nav-logo {
+  height: 50px;
+  width: auto;
+  object-fit: contain;
+}
+
 .logo {
   font-size: 1.5rem;
   font-weight: bold;

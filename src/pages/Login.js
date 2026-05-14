@@ -36,9 +36,12 @@ function Login({ setToken }) {
   return (
     <div className="container">
       <div className="card" style={{ maxWidth: '400px', margin: '3rem auto' }}>
-        <h1 style={{ textAlign: 'center', marginBottom: '2rem', color: '#d4af37' }}>
-          Login
-        </h1>
+        <div style={{ textAlign: 'center', marginBottom: '2rem' }}>
+          <img src="/logo.png" alt="S.S. Jewellers" style={{ height: '80px', marginBottom: '1rem' }} />
+          <h1 style={{ textAlign: 'center', marginBottom: '2rem', color: '#d4af37', fontSize: '24px' }}>
+            S.S. JEWELLERS
+          </h1>
+        </div>
 
         {error && <div className="error-message">{error}</div>}
 
