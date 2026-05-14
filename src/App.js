@@ -26,7 +26,7 @@ function App() {
         <nav className="navbar">
           <div className="nav-container">
             <div className="nav-logo-section">
-              <h1 className="logo">S.S. JEWELLERS</h1>
+              <img src="/logo.png" alt="S.S. Jewellers" className="navbar-logo-img" />
             </div>
             {token && (
               <button onClick={handleLogout} className="logout-btn">

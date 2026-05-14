@@ -52,33 +52,12 @@ function Login({ setToken }) {
       }}>
         {/* Logo/Branding Section */}
         <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-          <div style={{
-            fontSize: '56px',
-            fontWeight: 'bold',
-            color: '#d4af37',
-            marginBottom: '0.5rem',
-            letterSpacing: '3px'
-          }}>
-            S.S
-          </div>
-          <h1 style={{
-            fontSize: '26px',
-            fontWeight: '600',
-            color: '#1a1a1a',
-            margin: '0.5rem 0 0 0',
-            letterSpacing: '1px'
-          }}>
-            JEWELLERS
-          </h1>
-          <p style={{
-            fontSize: '11px',
-            color: '#999',
-            marginTop: '0.5rem',
-            letterSpacing: '1px',
-            fontWeight: '500'
-          }}>
-            GOLD & SILVER HALLMARKED
-          </p>
+          <img src="/logo.png" alt="S.S. Jewellers" style={{
+            height: '120px',
+            width: 'auto',
+            objectFit: 'contain',
+            marginBottom: '1.5rem'
+          }} />
         </div>
 
         {error && <div className="error-message">{error}</div>}
