@@ -132,8 +132,9 @@ function ViewInvoice({ token }) {
           <thead>
             <tr>
               <th>Item</th>
-              <th style={{ textAlign: 'right' }}>Weight</th>
-              <th style={{ textAlign: 'right' }}>Purity</th>
+              <th style={{ textAlign: 'right' }}>Gross Wt (g)</th>
+              <th style={{ textAlign: 'right' }}>Net Wt (g)</th>
+              <th style={{ textAlign: 'right' }}>Gem Price</th>
               <th style={{ textAlign: 'right' }}>Amount</th>
               <th style={{ textAlign: 'right' }}>GST %</th>
               <th style={{ textAlign: 'right' }}>GST Amount</th>
@@ -144,8 +145,9 @@ function ViewInvoice({ token }) {
             {invoice.items.map((item, idx) => (
               <tr key={idx}>
                 <td>{item.description || item.item_type}</td>
-                <td style={{ textAlign: 'right' }}>{item.weight ? `${item.weight}g` : '-'}</td>
-                <td style={{ textAlign: 'right' }}>{item.purity || '-'}</td>
+                <td style={{ textAlign: 'right' }}>{item.gross_weight ? `${parseFloat(item.gross_weight).toFixed(3)}` : '-'}</td>
+                <td style={{ textAlign: 'right' }}>{item.net_weight ? `${parseFloat(item.net_weight).toFixed(3)}` : '-'}</td>
+                <td style={{ textAlign: 'right' }}>{item.gemstone_price && parseFloat(item.gemstone_price) > 0 ? `₹${parseFloat(item.gemstone_price).toFixed(2)}` : '-'}</td>
                 <td style={{ textAlign: 'right' }}>₹{parseFloat(item.amount).toFixed(2)}</td>
                 <td style={{ textAlign: 'right' }}>{item.gst_rate}%</td>
                 <td style={{ textAlign: 'right' }}>₹{parseFloat(item.gst_amount).toFixed(2)}</td>
