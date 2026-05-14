@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
+import API_BASE_URL from '../config/api';
 
 function ViewInvoice({ token }) {
   const { id } = useParams();
@@ -16,7 +17,7 @@ function ViewInvoice({ token }) {
 
   const fetchInvoice = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/api/invoices/${id}`, {
+      const response = await axios.get(`${API_BASE_URL}/invoices/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setInvoice(response.data);
@@ -30,7 +31,7 @@ function ViewInvoice({ token }) {
   const downloadPDF = async () => {
     setDownloading(true);
     try {
-      const response = await axios.get(`http://localhost:5000/api/invoices/${id}/pdf`, {
+      const response = await axios.get(`${API_BASE_URL}/invoices/${id}/pdf`, {
         headers: { Authorization: `Bearer ${token}` },
         responseType: 'blob'
       });

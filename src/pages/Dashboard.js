@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
+import API_BASE_URL from '../config/api';
 
 function Dashboard({ token }) {
   const [invoices, setInvoices] = useState([]);
@@ -15,7 +16,7 @@ function Dashboard({ token }) {
 
   const fetchInvoices = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/invoices', {
+      const response = await axios.get(`${API_BASE_URL}/invoices`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setInvoices(response.data);
@@ -28,7 +29,7 @@ function Dashboard({ token }) {
 
   const fetchGstSummary = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/gst-summary', {
+      const response = await axios.get(`${API_BASE_URL}/gst-summary`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setGstSummary(response.data);

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import API_BASE_URL from '../config/api';
 
 function CreateInvoice({ token }) {
   const [customerName, setCustomerName] = useState('');
@@ -71,7 +72,7 @@ function CreateInvoice({ token }) {
 
     try {
       const response = await axios.post(
-        'http://localhost:5000/api/invoices',
+        `${API_BASE_URL}/invoices`,
         {
           customer_name: customerName,
           customer_address: customerAddress,
