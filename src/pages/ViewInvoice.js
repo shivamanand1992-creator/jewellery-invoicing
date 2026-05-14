@@ -124,6 +124,7 @@ function ViewInvoice({ token }) {
           {invoice.customer_address && <p>{invoice.customer_address}</p>}
           {invoice.customer_state && <p>State: {invoice.customer_state}</p>}
           {invoice.customer_gstin && <p>GSTIN: {invoice.customer_gstin}</p>}
+          {invoice.customer_pan && <p>PAN: {invoice.customer_pan}</p>}
         </div>
 
         <table className="invoice-table">

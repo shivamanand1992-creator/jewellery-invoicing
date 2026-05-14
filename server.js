@@ -72,6 +72,7 @@ const initDB = async () => {
         customer_address TEXT,
         customer_state VARCHAR(50),
         customer_gstin VARCHAR(50),
+        customer_pan VARCHAR(10),
         gold_price DECIMAL(10, 2),
         silver_price DECIMAL(10, 2),
         invoice_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -189,7 +190,7 @@ app.get('/api/user', verifyToken, async (req, res) => {
 // Create invoice
 app.post('/api/invoices', verifyToken, async (req, res) => {
   try {
-    const { customer_name, customer_address, customer_state, customer_gstin, gold_price, silver_price, items } = req.body;
+    const { customer_name, customer_address, customer_state, customer_gstin, customer_pan, gold_price, silver_price, items } = req.body;
     
     // Get next invoice number
     const invoiceResult = await pool.query(
@@ -201,8 +202,8 @@ app.post('/api/invoices', verifyToken, async (req, res) => {
     let totalAmount = 0;
     
     const result = await pool.query(
-      'INSERT INTO invoices (user_id, invoice_number, customer_name, customer_address, customer_state, customer_gstin, gold_price, silver_price, total_amount) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id',
-      [req.userId, invoiceNumber, customer_name, customer_address, customer_state, customer_gstin, gold_price, silver_price, 0]
+      'INSERT INTO invoices (user_id, invoice_number, customer_name, customer_address, customer_state, customer_gstin, customer_pan, gold_price, silver_price, total_amount) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id',
+      [req.userId, invoiceNumber, customer_name, customer_address, customer_state, customer_gstin, customer_pan, gold_price, silver_price, 0]
     );
     
     const invoiceId = result.rows[0].id;

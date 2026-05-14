@@ -7,6 +7,7 @@ function CreateInvoice({ token }) {
   const [customerAddress, setCustomerAddress] = useState('');
   const [customerState, setCustomerState] = useState('');
   const [customerGstin, setCustomerGstin] = useState('');
+  const [customerPan, setCustomerPan] = useState('');
   const [goldPrice, setGoldPrice] = useState('');
   const [silverPrice, setSilverPrice] = useState('');
   const [items, setItems] = useState([
@@ -46,6 +47,7 @@ function CreateInvoice({ token }) {
           customer_address: customerAddress,
           customer_state: customerState,
           customer_gstin: customerGstin,
+          customer_pan: customerPan,
           gold_price: parseFloat(goldPrice),
           silver_price: parseFloat(silverPrice),
           items: items.map(item => ({
@@ -125,6 +127,18 @@ function CreateInvoice({ token }) {
               type="text"
               value={customerGstin}
               onChange={(e) => setCustomerGstin(e.target.value)}
+              disabled={loading}
+            />
+          </div>
+
+          <div className="form-group">
+            <label>Customer PAN (Optional)</label>
+            <input
+              type="text"
+              value={customerPan}
+              onChange={(e) => setCustomerPan(e.target.value)}
+              placeholder="e.g., AAAAA0000A"
+              maxLength="10"
               disabled={loading}
             />
           </div>
