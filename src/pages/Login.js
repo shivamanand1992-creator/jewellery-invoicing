@@ -55,7 +55,7 @@ function Login({ setToken }) {
           <h1 style={{
             fontSize: '32px',
             fontWeight: 'bold',
-            color: '#d4af37',
+            color: '#000',
             margin: '0',
             letterSpacing: '2px'
           }}>

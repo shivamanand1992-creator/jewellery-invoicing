@@ -365,12 +365,13 @@ function CreateInvoice({ token }) {
             {/* Invoice Preview - Looks like PDF */}
             <div style={{ marginBottom: '2rem', paddingBottom: '1rem', borderBottom: '2px solid #d4af37' }}>
               <div style={{ textAlign: 'center', marginBottom: '1.5rem' }}>
-                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#c9a961', letterSpacing: '2px' }}>S.S</div>
-                <div style={{ fontSize: '14px', color: '#c9a961', letterSpacing: '2px', fontWeight: '500' }}>JEWELLERS</div>
+                <div style={{ fontSize: '32px', fontWeight: 'bold', color: '#000', letterSpacing: '2px' }}>S.S</div>
+                <div style={{ fontSize: '14px', color: '#000', letterSpacing: '2px', fontWeight: '500' }}>JEWELLERS</div>
               </div>
               <p style={{ textAlign: 'center', margin: '0.5rem 0', fontSize: '12px', fontWeight: 'bold' }}>GOLD & SILVER HALLMARKED JEWELLERY</p>
               <p style={{ textAlign: 'center', margin: '0.25rem 0', fontSize: '11px' }}>Shop No. 3, 103, Pocket-F22, Sector-3, Rohini, Delhi</p>
               <p style={{ textAlign: 'center', margin: '0.25rem 0', fontSize: '11px' }}>Phone: 9210112528 | GSTIN: 07AENPA8746C1ZJ</p>
+              <p style={{ textAlign: 'center', margin: '0.5rem 0 0 0', fontSize: '11px' }}>Date: {new Date().toLocaleDateString('en-IN')}</p>
             </div>
 
             <h3 style={{ textAlign: 'center', color: '#d4af37', marginBottom: '1.5rem' }}>TAX INVOICE</h3>
@@ -390,6 +391,7 @@ function CreateInvoice({ token }) {
               <thead>
                 <tr style={{ backgroundColor: '#f0f0f0', borderBottom: '2px solid #333' }}>
                   <th style={{ padding: '0.5rem', textAlign: 'left' }}>Item</th>
+                  <th style={{ padding: '0.5rem', textAlign: 'center' }}>HSN</th>
                   <th style={{ padding: '0.5rem', textAlign: 'right' }}>Gross Wt</th>
                   <th style={{ padding: '0.5rem', textAlign: 'right' }}>Net Wt</th>
                   <th style={{ padding: '0.5rem', textAlign: 'right' }}>Gem Price</th>
@@ -414,6 +416,7 @@ function CreateInvoice({ token }) {
                   return (
                     <tr key={idx} style={{ borderBottom: '1px solid #ddd' }}>
                       <td style={{ padding: '0.5rem', textAlign: 'left' }}>{item.item_type}</td>
+                      <td style={{ padding: '0.5rem', textAlign: 'center' }}>7113</td>
                       <td style={{ padding: '0.5rem', textAlign: 'right' }}>
                         {item.use_flat_price ? '-' : `${item.gross_weight}g`}
                       </td>
@@ -434,30 +437,42 @@ function CreateInvoice({ token }) {
 
             {/* Summary */}
             <div style={{ marginBottom: '1.5rem', paddingLeft: '50%', fontSize: '12px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '0.5rem', borderBottom: '1px solid #ddd' }}>
-                <span>Subtotal:</span>
-                <span>₹{items.reduce((sum, item) => {
+              {(() => {
+                const jewelSubtotal = items.reduce((sum, item) => {
                   let amt = item.use_flat_price ? parseFloat(item.flat_price || 0) : (parseFloat(item.net_weight || 0) * parseFloat(item.selling_price_per_gram || 0));
                   if (!item.use_flat_price && item.gemstone_price) amt += parseFloat(item.gemstone_price);
                   return sum + amt;
-                }, 0).toFixed(2)}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', fontWeight: 'bold', color: '#d4af37' }}>
-                <span>GST (3%):</span>
-                <span>₹{(items.reduce((sum, item) => {
-                  let amt = item.use_flat_price ? parseFloat(item.flat_price || 0) : (parseFloat(item.net_weight || 0) * parseFloat(item.selling_price_per_gram || 0));
-                  if (!item.use_flat_price && item.gemstone_price) amt += parseFloat(item.gemstone_price);
-                  return sum + amt;
-                }, 0) * 0.03).toFixed(2)}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', fontWeight: 'bold', color: '#1a1a1a', paddingTop: '0.5rem', borderTop: '2px solid #333' }}>
-                <span>TOTAL:</span>
-                <span>₹{(items.reduce((sum, item) => {
-                  let amt = item.use_flat_price ? parseFloat(item.flat_price || 0) : (parseFloat(item.net_weight || 0) * parseFloat(item.selling_price_per_gram || 0));
-                  if (!item.use_flat_price && item.gemstone_price) amt += parseFloat(item.gemstone_price);
-                  return sum + (amt + amt * 0.03);
-                }, 0)).toFixed(2)}</span>
-              </div>
+                }, 0);
+                const jewelGST = jewelSubtotal * 0.03;
+                const makingCharge = jewelSubtotal * 0.10; // 10%
+                const makingGST = makingCharge * 0.05; // 5% on making charge
+                const total = jewelSubtotal + jewelGST + makingCharge + makingGST;
+                
+                return (
+                  <>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '0.5rem', borderBottom: '1px solid #ddd' }}>
+                      <span>Jewellery Subtotal:</span>
+                      <span>₹{jewelSubtotal.toFixed(2)}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '0.5rem' }}>
+                      <span>GST (3%):</span>
+                      <span>₹{jewelGST.toFixed(2)}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '0.5rem', borderBottom: '1px solid #ddd' }}>
+                      <span>Making Charge (10%):</span>
+                      <span>₹{makingCharge.toFixed(2)}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', fontWeight: 'bold', color: '#d4af37' }}>
+                      <span>GST on Making (5%):</span>
+                      <span>₹{makingGST.toFixed(2)}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', fontWeight: 'bold', color: '#1a1a1a', paddingTop: '0.5rem', borderTop: '2px solid #333' }}>
+                      <span>TOTAL:</span>
+                      <span>₹{total.toFixed(2)}</span>
+                    </div>
+                  </>
+                );
+              })()}
             </div>
 
             {/* Action Buttons */}
