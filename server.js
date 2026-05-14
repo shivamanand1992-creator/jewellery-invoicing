@@ -73,8 +73,6 @@ const initDB = async () => {
         customer_state VARCHAR(50),
         customer_gstin VARCHAR(50),
         customer_pan VARCHAR(10),
-        gold_price DECIMAL(10, 2),
-        silver_price DECIMAL(10, 2),
         invoice_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         total_amount DECIMAL(12, 2),
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -190,7 +188,7 @@ app.get('/api/user', verifyToken, async (req, res) => {
 // Create invoice
 app.post('/api/invoices', verifyToken, async (req, res) => {
   try {
-    const { customer_name, customer_address, customer_state, customer_gstin, customer_pan, gold_price, silver_price, items } = req.body;
+    const { customer_name, customer_address, customer_state, customer_gstin, customer_pan, items } = req.body;
     
     // Get next invoice number
     const invoiceResult = await pool.query(
@@ -202,8 +200,8 @@ app.post('/api/invoices', verifyToken, async (req, res) => {
     let totalAmount = 0;
     
     const result = await pool.query(
-      'INSERT INTO invoices (user_id, invoice_number, customer_name, customer_address, customer_state, customer_gstin, customer_pan, gold_price, silver_price, total_amount) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id',
-      [req.userId, invoiceNumber, customer_name, customer_address, customer_state, customer_gstin, customer_pan, gold_price, silver_price, 0]
+      'INSERT INTO invoices (user_id, invoice_number, customer_name, customer_address, customer_state, customer_gstin, customer_pan, total_amount) VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id',
+      [req.userId, invoiceNumber, customer_name, customer_address || '', customer_state || '', customer_gstin || '', customer_pan || '', 0]
     );
     
     const invoiceId = result.rows[0].id;
@@ -336,12 +334,19 @@ app.get('/api/invoices/:id/pdf', verifyToken, async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="invoice-${invoice.invoice_number}.pdf"`);
     doc.pipe(res);
     
+    // Add logo image
+    try {
+      doc.image(require('path').join(__dirname, 'public/logo.png'), 50, 20, { width: 80 });
+    } catch (err) {
+      console.log('Logo image not found, continuing without it');
+    }
+    
     // Header with simple text branding
-    doc.fontSize(24).font('Helvetica-Bold').fillColor('#000').text('S.S. JEWELLERS', 50, 40);
-    doc.fontSize(9).font('Helvetica').fillColor('#000').text('GOLD & SILVER HALLMARKED JEWELLERY', 50, 70);
-    doc.fontSize(9).text(`Shop Address: ${user.shop_address}`, 50, 82);
-    doc.fontSize(9).text(`Phone: ${user.shop_phone}`, 50, 94);
-    if (user.gst_number) doc.fontSize(9).text(`GSTIN: ${user.gst_number}`, 50, 106);
+    doc.fontSize(24).font('Helvetica-Bold').fillColor('#000').text('S.S. JEWELLERS', 150, 40);
+    doc.fontSize(9).font('Helvetica').fillColor('#000').text('GOLD & SILVER HALLMARKED JEWELLERY', 150, 70);
+    doc.fontSize(9).text(`Shop Address: ${user.shop_address}`, 150, 82);
+    doc.fontSize(9).text(`Phone: ${user.shop_phone}`, 150, 94);
+    if (user.gst_number) doc.fontSize(9).text(`GSTIN: ${user.gst_number}`, 150, 106);
     
     doc.fontSize(12).font('Helvetica-Bold').fillColor('#d4af37').text('TAX INVOICE', 350, 40);
     doc.fontSize(9).font('Helvetica').fillColor('#000').text(`Date: ${new Date(invoice.invoice_date).toLocaleDateString('en-IN')}`, 350, 65);
