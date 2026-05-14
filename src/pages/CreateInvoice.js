@@ -8,8 +8,6 @@ function CreateInvoice({ token }) {
   const [customerState, setCustomerState] = useState('');
   const [customerGstin, setCustomerGstin] = useState('');
   const [customerPan, setCustomerPan] = useState('');
-  const [goldPrice, setGoldPrice] = useState('');
-  const [silverPrice, setSilverPrice] = useState('');
   const [items, setItems] = useState([
     { item_type: 'Gold Ring', description: '', gross_weight: '', net_weight: '', selling_price_per_gram: '', gemstone_price: '', making_charge_percent: '', flat_price: '', use_flat_price: false }
   ]);
@@ -41,18 +39,17 @@ function CreateInvoice({ token }) {
     setError('');
     
     // Validate required fields
-    if (!customerName || !goldPrice) {
-      setError('Please fill in customer name and gold price');
+    if (!customerName) {
+      setError('Please fill in customer name');
       return;
     }
 
-    // Check if silver price is needed
-    if (items.some(item => item.item_type.includes('Silver') && !item.use_flat_price) && !silverPrice) {
-      setError('Please fill in silver price for weight-based silver items');
+    // Validate selling prices and weights for non-flat-price items
+    if (items.some(item => !item.use_flat_price && !item.selling_price_per_gram)) {
+      setError('Please fill in selling price for weight-based items');
       return;
     }
     
-    // Validate weights only for non-flat-price items
     if (items.some(item => !item.use_flat_price && !item.net_weight && item.item_type !== 'Making Charge')) {
       setError('Please fill in net weight for weight-based items');
       return;
@@ -81,8 +78,6 @@ function CreateInvoice({ token }) {
           customer_state: customerState,
           customer_gstin: customerGstin,
           customer_pan: customerPan,
-          gold_price: parseFloat(goldPrice),
-          silver_price: parseFloat(silverPrice),
           items: items.map(item => ({
             item_type: item.item_type,
             description: item.description,
@@ -176,38 +171,6 @@ function CreateInvoice({ token }) {
               maxLength="10"
               disabled={loading}
             />
-          </div>
-        </div>
-
-        <div className="card">
-          <h2 style={{ marginBottom: '1.5rem', color: '#d4af37' }}>Today's Rates</h2>
-
-          <div className="grid">
-            <div className="form-group">
-              <label>Gold Price (per gram)</label>
-              <input
-                type="number"
-                step="0.01"
-                value={goldPrice}
-                onChange={(e) => setGoldPrice(e.target.value)}
-                placeholder="e.g., 6500"
-                disabled={loading}
-              />
-            </div>
-
-            {items.some(item => item.item_type.includes('Silver') && !item.use_flat_price) && (
-              <div className="form-group">
-                <label>Silver Price (per gram)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  value={silverPrice}
-                  onChange={(e) => setSilverPrice(e.target.value)}
-                  placeholder="e.g., 75"
-                  disabled={loading}
-                />
-              </div>
-            )}
           </div>
         </div>
 
@@ -427,7 +390,9 @@ function CreateInvoice({ token }) {
               <thead>
                 <tr style={{ backgroundColor: '#f0f0f0', borderBottom: '2px solid #333' }}>
                   <th style={{ padding: '0.5rem', textAlign: 'left' }}>Item</th>
-                  <th style={{ padding: '0.5rem', textAlign: 'right' }}>Weight</th>
+                  <th style={{ padding: '0.5rem', textAlign: 'right' }}>Gross Wt</th>
+                  <th style={{ padding: '0.5rem', textAlign: 'right' }}>Net Wt</th>
+                  <th style={{ padding: '0.5rem', textAlign: 'right' }}>Gem Price</th>
                   <th style={{ padding: '0.5rem', textAlign: 'right' }}>Amount</th>
                   <th style={{ padding: '0.5rem', textAlign: 'right' }}>GST</th>
                   <th style={{ padding: '0.5rem', textAlign: 'right' }}>Total</th>
@@ -451,6 +416,12 @@ function CreateInvoice({ token }) {
                       <td style={{ padding: '0.5rem', textAlign: 'left' }}>{item.item_type}</td>
                       <td style={{ padding: '0.5rem', textAlign: 'right' }}>
                         {item.use_flat_price ? '-' : `${item.gross_weight}g`}
+                      </td>
+                      <td style={{ padding: '0.5rem', textAlign: 'right' }}>
+                        {item.use_flat_price ? '-' : `${item.net_weight}g`}
+                      </td>
+                      <td style={{ padding: '0.5rem', textAlign: 'right' }}>
+                        {item.gemstone_price ? `₹${parseFloat(item.gemstone_price).toFixed(2)}` : '-'}
                       </td>
                       <td style={{ padding: '0.5rem', textAlign: 'right' }}>₹{itemAmount.toFixed(2)}</td>
                       <td style={{ padding: '0.5rem', textAlign: 'right' }}>₹{gstAmount.toFixed(2)}</td>
