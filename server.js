@@ -389,9 +389,11 @@ app.get('/api/gst-summary', verifyToken, async (req, res) => {
 });
 
 // Serve React app for all other routes (SPA)
-app.get('*', (req, res) => {
+app.use((req, res) => {
   if (!isDev) {
     res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+  } else {
+    res.status(404).json({ error: 'Not found' });
   }
 });
 
