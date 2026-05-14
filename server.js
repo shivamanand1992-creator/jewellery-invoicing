@@ -141,6 +141,16 @@ const initDB = async () => {
       );
     `);
 
+    // RESET: Clear all invoices to start fresh
+    try {
+      await pool.query('TRUNCATE TABLE invoice_items CASCADE');
+      await pool.query('TRUNCATE TABLE invoices CASCADE');
+      await pool.query('ALTER SEQUENCE invoices_id_seq RESTART WITH 1');
+      console.log('🔄 Database reset: All invoices cleared, sequences restarted');
+    } catch (err) {
+      console.log('Reset info:', err.message);
+    }
+
     console.log('Database initialized');
   } catch (err) {
     console.error('DB init error:', err);
@@ -508,17 +518,20 @@ app.get('/api/invoices/:id/pdf', verifyToken, async (req, res) => {
     });
     
     // QR Code
-    if (user.upi_id) {
-      const upiString = `upi://pay?pa=${user.upi_id}&pn=${encodeURIComponent(user.shop_name)}&am=${invoice.total_amount}&tn=Invoice%20${invoice.invoice_number}`;
-      QRCode.toDataURL(upiString, { errorCorrectionLevel: 'H', width: 100 }).then(qrUrl => {
+    try {
+      if (user.upi_id) {
+        const upiString = `upi://pay?pa=${user.upi_id}&pn=${encodeURIComponent(user.shop_name)}&am=${invoice.total_amount}&tn=Invoice%20${invoice.invoice_number}`;
+        const qrUrl = await QRCode.toDataURL(upiString, { errorCorrectionLevel: 'H', width: 100 });
         const base64Data = qrUrl.split(',')[1];
         doc.image(Buffer.from(base64Data, 'base64'), 50, y + 40, { width: 100 });
         doc.fontSize(9).text(`UPI: ${user.upi_id}`, 160, y + 50);
-        doc.end();
-      });
-    } else {
-      doc.end();
+      }
+    } catch (qrErr) {
+      console.error('QR Code generation error:', qrErr);
+      doc.fontSize(8).text('(QR Code unavailable)', 50, y + 40);
     }
+    
+    doc.end();
   } catch (err) {
     console.error('PDF error:', err);
     res.status(400).json({ error: err.message });
