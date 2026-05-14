@@ -89,7 +89,7 @@ const initDB = async () => {
         description VARCHAR(255),
         gross_weight DECIMAL(10, 3),
         net_weight DECIMAL(10, 3),
-        purity VARCHAR(20),
+        selling_price_per_gram DECIMAL(10, 2),
         gemstone_price DECIMAL(10, 2),
         making_charge DECIMAL(10, 2),
         amount DECIMAL(12, 2),
@@ -211,23 +211,16 @@ app.post('/api/invoices', verifyToken, async (req, res) => {
     // Calculate and insert items
     let jewelTotal = 0; // Total jewellery value before making charge
     
-    // First pass: calculate jewellery totals using NET WEIGHT or FLAT PRICE
+    // First pass: calculate jewellery totals using NET WEIGHT × SELLING PRICE or FLAT PRICE
     for (const item of items) {
       if (item.item_type !== 'Making Charge') {
         let itemAmount = 0;
         
         if (item.use_flat_price) {
-          // Use flat price directly
           itemAmount = parseFloat(item.flat_price) || 0;
         } else {
-          // Calculate jewellery value using NET WEIGHT
-          if (item.item_type === 'Gold' || item.item_type === 'Gold Ring' || item.item_type.includes('Gold')) {
-            const purityMap = { '22K': 0.916, '20K': 0.833, '18K': 0.75 };
-            const purity = purityMap[item.purity] || 0.916;
-            itemAmount = parseFloat(item.net_weight) * gold_price * purity;
-          } else if (item.item_type === 'Silver' || item.item_type.includes('Silver')) {
-            itemAmount = parseFloat(item.net_weight) * silver_price * 0.925;
-          }
+          // Calculate: NET WEIGHT × SELLING PRICE PER GRAM
+          itemAmount = parseFloat(item.net_weight) * parseFloat(item.selling_price_per_gram);
           
           if (item.gemstone_price) {
             itemAmount += parseFloat(item.gemstone_price);
@@ -250,17 +243,10 @@ app.post('/api/invoices', verifyToken, async (req, res) => {
         gstRate = 3;
         
         if (item.use_flat_price) {
-          // Use flat price directly
           itemAmount = parseFloat(item.flat_price) || 0;
         } else {
-          // Calculate jewellery value using NET WEIGHT
-          if (item.item_type === 'Gold' || item.item_type === 'Gold Ring' || item.item_type.includes('Gold')) {
-            const purityMap = { '22K': 0.916, '20K': 0.833, '18K': 0.75 };
-            const purity = purityMap[item.purity] || 0.916;
-            itemAmount = parseFloat(item.net_weight) * gold_price * purity;
-          } else if (item.item_type === 'Silver' || item.item_type.includes('Silver')) {
-            itemAmount = parseFloat(item.net_weight) * silver_price * 0.925;
-          }
+          // Calculate: NET WEIGHT × SELLING PRICE PER GRAM
+          itemAmount = parseFloat(item.net_weight) * parseFloat(item.selling_price_per_gram);
           
           if (item.gemstone_price) {
             itemAmount += parseFloat(item.gemstone_price);
@@ -276,8 +262,8 @@ app.post('/api/invoices', verifyToken, async (req, res) => {
       const makingChargePercent = item.making_charge_percent || 0;
       
       await pool.query(
-        'INSERT INTO invoice_items (invoice_id, item_type, description, gross_weight, net_weight, purity, gemstone_price, making_charge, amount, gst_rate, gst_amount) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)',
-        [invoiceId, item.item_type, item.description || '', item.gross_weight || 0, item.net_weight || 0, item.purity || '', item.gemstone_price || 0, makingChargePercent, itemAmount, gstRate, gstAmount]
+        'INSERT INTO invoice_items (invoice_id, item_type, description, gross_weight, net_weight, selling_price_per_gram, gemstone_price, making_charge, amount, gst_rate, gst_amount) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)',
+        [invoiceId, item.item_type, item.description || '', item.gross_weight || 0, item.net_weight || 0, item.selling_price_per_gram || 0, item.gemstone_price || 0, makingChargePercent, itemAmount, gstRate, gstAmount]
       );
     }
     
@@ -290,8 +276,8 @@ app.post('/api/invoices', verifyToken, async (req, res) => {
       totalAmount += makingChargeAmount + makingChargeGST;
       
       await pool.query(
-        'INSERT INTO invoice_items (invoice_id, item_type, description, gross_weight, net_weight, purity, gemstone_price, making_charge, amount, gst_rate, gst_amount) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)',
-        [invoiceId, 'Making Charge', `${makingChargePercent}% Making`, 0, 0, '', 0, makingChargePercent, makingChargeAmount, 5, makingChargeGST]
+        'INSERT INTO invoice_items (invoice_id, item_type, description, gross_weight, net_weight, selling_price_per_gram, gemstone_price, making_charge, amount, gst_rate, gst_amount) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)',
+        [invoiceId, 'Making Charge', `${makingChargePercent}% Making`, 0, 0, 0, 0, makingChargePercent, makingChargeAmount, 5, makingChargeGST]
       );
     }
     
@@ -363,51 +349,51 @@ app.get('/api/invoices/:id/pdf', verifyToken, async (req, res) => {
     doc.pipe(res);
     
     // Header with simple text branding
-    doc.fontSize(22).font('Helvetica-Bold').text('S.S. JEWELLERS', 50, 40);
-    doc.fontSize(10).font('Helvetica').text('GOLD & SILVER HALLMARKED JEWELLERY', 50, 65);
-    doc.fontSize(10).text(`Shop Address: ${user.shop_address}`, 50, 80);
-    doc.fontSize(10).text(`Phone: ${user.shop_phone}`, 50, 95);
-    if (user.gst_number) doc.fontSize(10).text(`GSTIN: ${user.gst_number}`, 50, 110);
+    doc.fontSize(24).font('Helvetica-Bold').text('S.S. JEWELLERS', 50, 40);
+    doc.fontSize(9).font('Helvetica').text('GOLD & SILVER HALLMARKED JEWELLERY', 50, 70);
+    doc.fontSize(9).text(`Shop Address: ${user.shop_address}`, 50, 82);
+    doc.fontSize(9).text(`Phone: ${user.shop_phone}`, 50, 94);
+    if (user.gst_number) doc.fontSize(9).text(`GSTIN: ${user.gst_number}`, 50, 106);
     
-    doc.fontSize(14).font('Helvetica-Bold').text('TAX INVOICE', 350, 40);
+    doc.fontSize(12).font('Helvetica-Bold').text('TAX INVOICE', 350, 40);
     
-    doc.fontSize(10).font('Helvetica').text(`Invoice No: ${invoice.invoice_number}`, 50, 145);
-    doc.fontSize(10).text(`Invoice Date: ${new Date(invoice.invoice_date).toLocaleDateString()}`, 50, 160);
+    doc.fontSize(9).font('Helvetica').text(`Invoice No: ${invoice.invoice_number}`, 50, 135);
+    doc.fontSize(9).text(`Invoice Date: ${new Date(invoice.invoice_date).toLocaleDateString()}`, 50, 148);
     
     // Customer details
-    doc.fontSize(10).font('Helvetica-Bold').text('Bill To:', 50, 190);
-    doc.fontSize(10).font('Helvetica').text(`Name: ${invoice.customer_name}`, 50, 205);
-    if (invoice.customer_address) doc.fontSize(10).text(`Address: ${invoice.customer_address}`, 50, 220);
-    if (invoice.customer_state) doc.fontSize(10).text(`State: ${invoice.customer_state}`, 50, 235);
-    if (invoice.customer_gstin) doc.fontSize(10).text(`GSTIN: ${invoice.customer_gstin}`, 50, 250);
-    if (invoice.customer_pan) doc.fontSize(10).text(`PAN: ${invoice.customer_pan}`, 50, 265);
+    doc.fontSize(9).font('Helvetica-Bold').text('Bill To:', 50, 175);
+    doc.fontSize(9).font('Helvetica').text(`Name: ${invoice.customer_name}`, 50, 190);
+    if (invoice.customer_address) doc.fontSize(9).text(`Address: ${invoice.customer_address}`, 50, 202);
+    if (invoice.customer_state) doc.fontSize(9).text(`State: ${invoice.customer_state}`, 50, 214);
+    if (invoice.customer_gstin) doc.fontSize(9).text(`GSTIN: ${invoice.customer_gstin}`, 50, 226);
+    if (invoice.customer_pan) doc.fontSize(9).text(`PAN: ${invoice.customer_pan}`, 50, 238);
     
     // Table header
-    doc.fontSize(9).font('Helvetica-Bold');
-    doc.text('Item', 50, 290);
-    doc.text('Weight', 150, 290);
-    doc.text('Purity', 210, 290);
-    doc.text('Amount', 270, 290);
-    doc.text('GST %', 340, 290);
-    doc.text('GST Amt', 390, 290);
-    doc.text('Total', 450, 290);
+    doc.fontSize(8).font('Helvetica-Bold');
+    doc.text('Item', 50, 265);
+    doc.text('Gross Wt', 140, 265);
+    doc.text('Net Wt', 200, 265);
+    doc.text('Gem Price', 260, 265);
+    doc.text('Amount', 320, 265);
+    doc.text('GST (3%)', 380, 265);
+    doc.text('Total', 440, 265);
     
-    doc.moveTo(50, 305).lineTo(520, 305).stroke();
+    doc.moveTo(50, 280).lineTo(520, 280).stroke();
     
     // Items
-    let y = 320;
+    let y = 290;
     let jewelGSTAmount = 0;
     let makingGSTAmount = 0;
     
     for (const item of items) {
-      doc.fontSize(9).font('Helvetica');
+      doc.fontSize(8).font('Helvetica');
       doc.text(item.description || item.item_type, 50, y);
-      doc.text(item.weight ? item.weight.toString() : '-', 150, y);
-      doc.text(item.purity || '-', 210, y);
-      doc.text(`₹${item.amount.toFixed(2)}`, 270, y);
-      doc.text(`${item.gst_rate}%`, 340, y);
-      doc.text(`₹${item.gst_amount.toFixed(2)}`, 390, y);
-      doc.text(`₹${(parseFloat(item.amount) + parseFloat(item.gst_amount)).toFixed(2)}`, 450, y);
+      doc.text(item.gross_weight ? item.gross_weight.toString() + 'g' : '-', 140, y);
+      doc.text(item.net_weight ? item.net_weight.toString() + 'g' : '-', 200, y);
+      doc.text(item.gemstone_price && item.gemstone_price > 0 ? `₹${item.gemstone_price.toFixed(2)}` : '-', 260, y);
+      doc.text(`₹${item.amount.toFixed(2)}`, 320, y);
+      doc.text(`₹${item.gst_amount.toFixed(2)}`, 380, y);
+      doc.text(`₹${(parseFloat(item.amount) + parseFloat(item.gst_amount)).toFixed(2)}`, 440, y);
       
       if (item.gst_rate === 3) {
         jewelGSTAmount += parseFloat(item.gst_amount);
@@ -415,25 +401,25 @@ app.get('/api/invoices/:id/pdf', verifyToken, async (req, res) => {
         makingGSTAmount += parseFloat(item.gst_amount);
       }
       
-      y += 20;
+      y += 15;
     }
     
     doc.moveTo(50, y).lineTo(520, y).stroke();
-    y += 15;
+    y += 12;
     
     // Summary
-    doc.fontSize(10).font('Helvetica-Bold');
+    doc.fontSize(9).font('Helvetica-Bold');
     doc.text('Summary:', 50, y);
-    y += 20;
-    
-    doc.fontSize(9).font('Helvetica');
-    doc.text(`GST @ 3% (Gold/Silver): ₹${jewelGSTAmount.toFixed(2)}`, 270, y);
-    y += 15;
-    doc.text(`GST @ 5% (Making Charge): ₹${makingGSTAmount.toFixed(2)}`, 270, y);
     y += 15;
     
-    doc.fontSize(11).font('Helvetica-Bold');
-    doc.text(`Total Amount: ₹${invoice.total_amount.toFixed(2)}`, 270, y);
+    doc.fontSize(8).font('Helvetica');
+    doc.text(`GST @ 3% (Gold/Silver): ₹${jewelGSTAmount.toFixed(2)}`, 320, y);
+    y += 12;
+    doc.text(`GST @ 5% (Making Charge): ₹${makingGSTAmount.toFixed(2)}`, 320, y);
+    y += 15;
+    
+    doc.fontSize(10).font('Helvetica-Bold');
+    doc.text(`TOTAL: ₹${invoice.total_amount.toFixed(2)}`, 320, y);
     
     // QR Code
     if (user.upi_id) {

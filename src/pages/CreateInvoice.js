@@ -11,7 +11,7 @@ function CreateInvoice({ token }) {
   const [goldPrice, setGoldPrice] = useState('');
   const [silverPrice, setSilverPrice] = useState('');
   const [items, setItems] = useState([
-    { item_type: 'Gold Ring', description: '', gross_weight: '', net_weight: '', purity: '22K', gemstone_price: '', making_charge_percent: '', flat_price: '', use_flat_price: false }
+    { item_type: 'Gold Ring', description: '', gross_weight: '', net_weight: '', selling_price_per_gram: '', gemstone_price: '', making_charge_percent: '', flat_price: '', use_flat_price: false }
   ]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -22,7 +22,7 @@ function CreateInvoice({ token }) {
   const addItem = () => {
     setItems([
       ...items,
-      { item_type: 'Gold Ring', description: '', gross_weight: '', net_weight: '', purity: '22K', gemstone_price: '', making_charge_percent: '', flat_price: '', use_flat_price: false }
+      { item_type: 'Gold Ring', description: '', gross_weight: '', net_weight: '', selling_price_per_gram: '', gemstone_price: '', making_charge_percent: '', flat_price: '', use_flat_price: false }
     ]);
   };
 
@@ -88,7 +88,7 @@ function CreateInvoice({ token }) {
             description: item.description,
             gross_weight: item.gross_weight ? parseFloat(item.gross_weight) : 0,
             net_weight: item.net_weight ? parseFloat(item.net_weight) : 0,
-            purity: item.purity,
+            selling_price_per_gram: item.selling_price_per_gram ? parseFloat(item.selling_price_per_gram) : 0,
             gemstone_price: item.gemstone_price ? parseFloat(item.gemstone_price) : 0,
             making_charge_percent: item.making_charge_percent ? parseFloat(item.making_charge_percent) : 0,
             flat_price: item.flat_price ? parseFloat(item.flat_price) : 0,
@@ -288,32 +288,28 @@ function CreateInvoice({ token }) {
                         </div>
                       </div>
 
-                      <div className="grid">
-                        <div className="form-group">
-                          <label>Purity</label>
-                          <select
-                            value={item.purity}
-                            onChange={(e) => handleItemChange(index, 'purity', e.target.value)}
-                            disabled={loading}
-                          >
-                            <option>22K</option>
-                            <option>20K</option>
-                            <option>18K</option>
-                            <option>925</option>
-                          </select>
-                        </div>
+                      <div className="form-group">
+                        <label>Selling Price (per gram)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={item.selling_price_per_gram}
+                          onChange={(e) => handleItemChange(index, 'selling_price_per_gram', e.target.value)}
+                          placeholder="Already accounts for purity"
+                          disabled={loading}
+                        />
+                      </div>
 
-                        <div className="form-group">
-                          <label>Gemstone Price (if any)</label>
-                          <input
-                            type="number"
-                            step="0.01"
-                            value={item.gemstone_price}
-                            onChange={(e) => handleItemChange(index, 'gemstone_price', e.target.value)}
-                            placeholder="0"
-                            disabled={loading}
-                          />
-                        </div>
+                      <div className="form-group">
+                        <label>Gemstone Price (if any)</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          value={item.gemstone_price}
+                          onChange={(e) => handleItemChange(index, 'gemstone_price', e.target.value)}
+                          placeholder="0"
+                          disabled={loading}
+                        />
                       </div>
                     </>
                   ) : (
@@ -443,13 +439,8 @@ function CreateInvoice({ token }) {
                   if (item.use_flat_price) {
                     itemAmount = parseFloat(item.flat_price || 0);
                   } else {
-                    if (item.item_type.includes('Gold')) {
-                      const purityMap = { '22K': 0.916, '20K': 0.833, '18K': 0.75 };
-                      const purity = purityMap[item.purity] || 0.916;
-                      itemAmount = parseFloat(item.net_weight || 0) * parseFloat(goldPrice || 0) * purity;
-                    } else if (item.item_type.includes('Silver')) {
-                      itemAmount = parseFloat(item.net_weight || 0) * parseFloat(silverPrice || 0) * 0.925;
-                    }
+                    // Calculate using NET WEIGHT × SELLING PRICE PER GRAM
+                    itemAmount = parseFloat(item.net_weight || 0) * parseFloat(item.selling_price_per_gram || 0);
                     if (item.gemstone_price) itemAmount += parseFloat(item.gemstone_price);
                   }
                   const gstAmount = itemAmount * 0.03;
@@ -475,48 +466,24 @@ function CreateInvoice({ token }) {
               <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '0.5rem', borderBottom: '1px solid #ddd' }}>
                 <span>Subtotal:</span>
                 <span>₹{items.reduce((sum, item) => {
-                  let amt = item.use_flat_price ? parseFloat(item.flat_price || 0) : 0;
-                  if (!item.use_flat_price) {
-                    if (item.item_type.includes('Gold')) {
-                      const purityMap = { '22K': 0.916, '20K': 0.833, '18K': 0.75 };
-                      amt = parseFloat(item.net_weight || 0) * parseFloat(goldPrice || 0) * (purityMap[item.purity] || 0.916);
-                    } else if (item.item_type.includes('Silver')) {
-                      amt = parseFloat(item.net_weight || 0) * parseFloat(silverPrice || 0) * 0.925;
-                    }
-                    if (item.gemstone_price) amt += parseFloat(item.gemstone_price);
-                  }
+                  let amt = item.use_flat_price ? parseFloat(item.flat_price || 0) : (parseFloat(item.net_weight || 0) * parseFloat(item.selling_price_per_gram || 0));
+                  if (!item.use_flat_price && item.gemstone_price) amt += parseFloat(item.gemstone_price);
                   return sum + amt;
                 }, 0).toFixed(2)}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', fontWeight: 'bold', color: '#d4af37' }}>
                 <span>GST (3%):</span>
                 <span>₹{(items.reduce((sum, item) => {
-                  let amt = item.use_flat_price ? parseFloat(item.flat_price || 0) : 0;
-                  if (!item.use_flat_price) {
-                    if (item.item_type.includes('Gold')) {
-                      const purityMap = { '22K': 0.916, '20K': 0.833, '18K': 0.75 };
-                      amt = parseFloat(item.net_weight || 0) * parseFloat(goldPrice || 0) * (purityMap[item.purity] || 0.916);
-                    } else if (item.item_type.includes('Silver')) {
-                      amt = parseFloat(item.net_weight || 0) * parseFloat(silverPrice || 0) * 0.925;
-                    }
-                    if (item.gemstone_price) amt += parseFloat(item.gemstone_price);
-                  }
+                  let amt = item.use_flat_price ? parseFloat(item.flat_price || 0) : (parseFloat(item.net_weight || 0) * parseFloat(item.selling_price_per_gram || 0));
+                  if (!item.use_flat_price && item.gemstone_price) amt += parseFloat(item.gemstone_price);
                   return sum + amt;
                 }, 0) * 0.03).toFixed(2)}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', fontWeight: 'bold', color: '#1a1a1a', paddingTop: '0.5rem', borderTop: '2px solid #333' }}>
                 <span>TOTAL:</span>
                 <span>₹{(items.reduce((sum, item) => {
-                  let amt = item.use_flat_price ? parseFloat(item.flat_price || 0) : 0;
-                  if (!item.use_flat_price) {
-                    if (item.item_type.includes('Gold')) {
-                      const purityMap = { '22K': 0.916, '20K': 0.833, '18K': 0.75 };
-                      amt = parseFloat(item.net_weight || 0) * parseFloat(goldPrice || 0) * (purityMap[item.purity] || 0.916);
-                    } else if (item.item_type.includes('Silver')) {
-                      amt = parseFloat(item.net_weight || 0) * parseFloat(silverPrice || 0) * 0.925;
-                    }
-                    if (item.gemstone_price) amt += parseFloat(item.gemstone_price);
-                  }
+                  let amt = item.use_flat_price ? parseFloat(item.flat_price || 0) : (parseFloat(item.net_weight || 0) * parseFloat(item.selling_price_per_gram || 0));
+                  if (!item.use_flat_price && item.gemstone_price) amt += parseFloat(item.gemstone_price);
                   return sum + (amt + amt * 0.03);
                 }, 0)).toFixed(2)}</span>
               </div>
