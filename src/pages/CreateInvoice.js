@@ -41,13 +41,26 @@ function CreateInvoice({ token }) {
     setError('');
     
     // Validate required fields
-    if (!customerName || !goldPrice || !silverPrice) {
-      setError('Please fill in customer name and prices');
+    if (!customerName || !goldPrice) {
+      setError('Please fill in customer name and gold price');
+      return;
+    }
+
+    // Check if silver price is needed
+    if (items.some(item => item.item_type.includes('Silver') && !item.use_flat_price) && !silverPrice) {
+      setError('Please fill in silver price for weight-based silver items');
       return;
     }
     
-    if (items.some(item => !item.net_weight && item.item_type !== 'Making Charge')) {
-      setError('Please fill in net weight for all items');
+    // Validate weights only for non-flat-price items
+    if (items.some(item => !item.use_flat_price && !item.net_weight && item.item_type !== 'Making Charge')) {
+      setError('Please fill in net weight for weight-based items');
+      return;
+    }
+
+    // Validate flat price for flat-price items
+    if (items.some(item => item.use_flat_price && !item.flat_price)) {
+      setError('Please fill in total price for flat-price items');
       return;
     }
     
@@ -178,23 +191,23 @@ function CreateInvoice({ token }) {
                 value={goldPrice}
                 onChange={(e) => setGoldPrice(e.target.value)}
                 placeholder="e.g., 6500"
-                required
                 disabled={loading}
               />
             </div>
 
-            <div className="form-group">
-              <label>Silver Price (per gram)</label>
-              <input
-                type="number"
-                step="0.01"
-                value={silverPrice}
-                onChange={(e) => setSilverPrice(e.target.value)}
-                placeholder="e.g., 75"
-                required
-                disabled={loading}
-              />
-            </div>
+            {items.some(item => item.item_type.includes('Silver') && !item.use_flat_price) && (
+              <div className="form-group">
+                <label>Silver Price (per gram)</label>
+                <input
+                  type="number"
+                  step="0.01"
+                  value={silverPrice}
+                  onChange={(e) => setSilverPrice(e.target.value)}
+                  placeholder="e.g., 75"
+                  disabled={loading}
+                />
+              </div>
+            )}
           </div>
         </div>
 

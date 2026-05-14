@@ -5,7 +5,6 @@ import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import CreateInvoice from './pages/CreateInvoice';
 import ViewInvoice from './pages/ViewInvoice';
-import Logo from './components/Logo';
 import './App.css';
 
 function App() {
@@ -26,9 +25,7 @@ function App() {
       <div className="app">
         <nav className="navbar">
           <div className="nav-container">
-            <div className="nav-logo-section">
-              <Logo size="small" />
-            </div>
+            <h1 className="logo">S.S. JEWELLERS</h1>
             {token && (
               <button onClick={handleLogout} className="logout-btn">
                 Logout

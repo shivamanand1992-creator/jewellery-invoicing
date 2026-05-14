@@ -362,47 +362,40 @@ app.get('/api/invoices/:id/pdf', verifyToken, async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="invoice-${invoice.invoice_number}.pdf"`);
     doc.pipe(res);
     
-    // Add logo image
-    try {
-      doc.image('./public/logo.png', 50, 20, { width: 150 });
-    } catch (err) {
-      console.log('Logo not found, continuing without it');
-    }
-    
-    // Header (move down to make space for logo)
-    doc.fontSize(20).font('Helvetica-Bold').text(user.shop_name, 50, 180);
-    doc.fontSize(10).font('Helvetica').text('GOLD & SILVER HALLMARKED JEWELLERY', 50, 205);
-    doc.fontSize(10).text(`Shop Address: ${user.shop_address}`, 50, 220);
-    doc.fontSize(10).text(`Phone: ${user.shop_phone}`, 50, 235);
-    if (user.gst_number) doc.fontSize(10).text(`GSTIN: ${user.gst_number}`, 50, 250);
+    // Header with simple text branding
+    doc.fontSize(22).font('Helvetica-Bold').text('S.S. JEWELLERS', 50, 40);
+    doc.fontSize(10).font('Helvetica').text('GOLD & SILVER HALLMARKED JEWELLERY', 50, 65);
+    doc.fontSize(10).text(`Shop Address: ${user.shop_address}`, 50, 80);
+    doc.fontSize(10).text(`Phone: ${user.shop_phone}`, 50, 95);
+    if (user.gst_number) doc.fontSize(10).text(`GSTIN: ${user.gst_number}`, 50, 110);
     
     doc.fontSize(14).font('Helvetica-Bold').text('TAX INVOICE', 350, 40);
     
-    doc.fontSize(10).font('Helvetica').text(`Invoice No: ${invoice.invoice_number}`, 50, 285);
-    doc.fontSize(10).text(`Invoice Date: ${new Date(invoice.invoice_date).toLocaleDateString()}`, 50, 300);
+    doc.fontSize(10).font('Helvetica').text(`Invoice No: ${invoice.invoice_number}`, 50, 145);
+    doc.fontSize(10).text(`Invoice Date: ${new Date(invoice.invoice_date).toLocaleDateString()}`, 50, 160);
     
     // Customer details
-    doc.fontSize(10).font('Helvetica-Bold').text('Bill To:', 50, 325);
-    doc.fontSize(10).font('Helvetica').text(`Name: ${invoice.customer_name}`, 50, 340);
-    if (invoice.customer_address) doc.fontSize(10).text(`Address: ${invoice.customer_address}`, 50, 355);
-    if (invoice.customer_state) doc.fontSize(10).text(`State: ${invoice.customer_state}`, 50, 370);
-    if (invoice.customer_gstin) doc.fontSize(10).text(`GSTIN: ${invoice.customer_gstin}`, 50, 385);
-    if (invoice.customer_pan) doc.fontSize(10).text(`PAN: ${invoice.customer_pan}`, 50, 400);
+    doc.fontSize(10).font('Helvetica-Bold').text('Bill To:', 50, 190);
+    doc.fontSize(10).font('Helvetica').text(`Name: ${invoice.customer_name}`, 50, 205);
+    if (invoice.customer_address) doc.fontSize(10).text(`Address: ${invoice.customer_address}`, 50, 220);
+    if (invoice.customer_state) doc.fontSize(10).text(`State: ${invoice.customer_state}`, 50, 235);
+    if (invoice.customer_gstin) doc.fontSize(10).text(`GSTIN: ${invoice.customer_gstin}`, 50, 250);
+    if (invoice.customer_pan) doc.fontSize(10).text(`PAN: ${invoice.customer_pan}`, 50, 265);
     
     // Table header
     doc.fontSize(9).font('Helvetica-Bold');
-    doc.text('Item', 50, 425);
-    doc.text('Weight', 150, 425);
-    doc.text('Purity', 210, 425);
-    doc.text('Amount', 270, 425);
-    doc.text('GST %', 340, 425);
-    doc.text('GST Amt', 390, 425);
-    doc.text('Total', 450, 425);
+    doc.text('Item', 50, 290);
+    doc.text('Weight', 150, 290);
+    doc.text('Purity', 210, 290);
+    doc.text('Amount', 270, 290);
+    doc.text('GST %', 340, 290);
+    doc.text('GST Amt', 390, 290);
+    doc.text('Total', 450, 290);
     
-    doc.moveTo(50, 440).lineTo(520, 440).stroke();
+    doc.moveTo(50, 305).lineTo(520, 305).stroke();
     
     // Items
-    let y = 310;
+    let y = 320;
     let jewelGSTAmount = 0;
     let makingGSTAmount = 0;
     
