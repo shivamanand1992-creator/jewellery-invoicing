@@ -199,6 +199,24 @@ app.post('/api/invoices', verifyToken, async (req, res) => {
   try {
     const { customer_name, customer_address, customer_state, customer_gstin, customer_pan, items } = req.body;
     
+    // Validate required fields
+    if (!customer_name || !items || items.length === 0) {
+      return res.status(400).json({ error: 'Customer name and at least one item are required' });
+    }
+    
+    // Validate that items have required fields
+    for (const item of items) {
+      if (!item.item_type) {
+        return res.status(400).json({ error: 'Each item must have an Item Type' });
+      }
+      if (!item.use_flat_price && (!item.net_weight || !item.selling_price_per_gram)) {
+        return res.status(400).json({ error: 'Weight-based items must have Net Weight and Selling Price per gram' });
+      }
+      if (item.use_flat_price && !item.flat_price) {
+        return res.status(400).json({ error: 'Flat price items must have a Total Price' });
+      }
+    }
+    
     // Get next invoice number
     const invoiceResult = await pool.query(
       'SELECT COUNT(*) as count FROM invoices WHERE user_id = $1',
@@ -281,8 +299,10 @@ app.post('/api/invoices', verifyToken, async (req, res) => {
     
     res.json({ invoiceId, invoiceNumber, totalAmount });
   } catch (err) {
-    console.error('Error creating invoice:', err);
-    res.status(400).json({ error: err.message });
+    console.error('Error creating invoice:', err.message);
+    console.error('Error stack:', err.stack);
+    console.error('Error code:', err.code);
+    res.status(400).json({ error: `Failed to create invoice: ${err.message}` });
   }
 });
 
