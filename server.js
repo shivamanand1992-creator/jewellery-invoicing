@@ -269,73 +269,65 @@ app.post('/api/invoices', verifyToken, async (req, res) => {
     
     const invoiceId = result.rows[0].id;
     
-    // Calculate and insert items
-    let jewelTotal = 0; // Total jewellery value before making charge
+    // Calculate and insert items with per-item making charges
+    let jewelGSTAmount = 0;
+    let makingGSTAmount = 0;
     
-    // First pass: calculate jewellery totals using NET WEIGHT × SELLING PRICE or FLAT PRICE
-    for (const item of items) {
-      if (item.item_type !== 'Making Charge') {
-        let itemAmount = 0;
-        
-        if (item.use_flat_price) {
-          itemAmount = parseFloat(item.flat_price) || 0;
-        } else {
-          // Calculate: NET WEIGHT × SELLING PRICE PER GRAM
-          itemAmount = parseFloat(item.net_weight) * parseFloat(item.selling_price_per_gram);
-          
-          if (item.gemstone_price) {
-            itemAmount += parseFloat(item.gemstone_price);
-          }
-        }
-        
-        jewelTotal += itemAmount;
-      }
-    }
-    
-    // Second pass: insert items and calculate making charge
     for (const item of items) {
       let itemAmount = 0;
-      let gstRate = 0;
+      let makingChargePercent = parseFloat(item.making_charge_percent) || 0;
+      let makingChargeAmount = 0;
+      let makingChargeGST = 0;
       
-      gstRate = 3;
-      
+      // Calculate base item amount
       if (item.use_flat_price) {
         itemAmount = parseFloat(item.flat_price) || 0;
       } else {
         // Calculate: NET WEIGHT × SELLING PRICE PER GRAM
         itemAmount = parseFloat(item.net_weight) * parseFloat(item.selling_price_per_gram);
-        
         if (item.gemstone_price) {
           itemAmount += parseFloat(item.gemstone_price);
         }
       }
       
-      const gstAmount = itemAmount * (gstRate / 100);
-      const finalAmount = itemAmount + gstAmount;
-      totalAmount += finalAmount;
+      // Calculate making charge on this item
+      if (makingChargePercent > 0) {
+        makingChargeAmount = (itemAmount * makingChargePercent) / 100;
+        makingChargeGST = (makingChargeAmount * 5) / 100;
+      }
       
+      // Insert the item with its making charge
       try {
         await pool.query(
           'INSERT INTO invoice_items (invoice_id, item_type, description, gross_weight, net_weight, selling_price_per_gram, gemstone_price, making_charge, amount, gst_rate, gst_amount) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)',
-          [invoiceId, item.item_type, item.description || '', item.gross_weight || 0, item.net_weight || 0, item.selling_price_per_gram || 0, item.gemstone_price || 0, 0, itemAmount, gstRate, gstAmount]
+          [invoiceId, item.item_type, item.description || '', item.gross_weight || 0, item.net_weight || 0, item.selling_price_per_gram || 0, item.gemstone_price || 0, makingChargePercent, itemAmount, 3, itemAmount * 0.03]
         );
       } catch (itemErr) {
         throw new Error(`Failed to insert item "${item.item_type}": ${itemErr.message}`);
       }
-    }
-    
-    // Add automatic 10% making charge on jewelry subtotal (before GST) with 5% GST
-    const makingChargeAmount = (jewelTotal * 10) / 100;
-    const makingChargeGST = (makingChargeAmount * 5) / 100;
-    totalAmount += makingChargeAmount + makingChargeGST;
-    
-    try {
-      await pool.query(
-        'INSERT INTO invoice_items (invoice_id, item_type, description, gross_weight, net_weight, selling_price_per_gram, gemstone_price, making_charge, amount, gst_rate, gst_amount) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)',
-        [invoiceId, 'Making Charge', '10% Making Charges', 0, 0, 0, 0, 10, makingChargeAmount, 5, makingChargeGST]
-      );
-    } catch (mkErr) {
-      throw new Error(`Failed to insert making charge: ${mkErr.message}`);
+      
+      // If item has making charge, insert a separate row for it
+      if (makingChargeAmount > 0) {
+        try {
+          await pool.query(
+            'INSERT INTO invoice_items (invoice_id, item_type, description, gross_weight, net_weight, selling_price_per_gram, gemstone_price, making_charge, amount, gst_rate, gst_amount) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)',
+            [invoiceId, `Making Charge (${makingChargePercent}%)`, `Making Charge for ${item.item_type}`, 0, 0, 0, 0, makingChargePercent, makingChargeAmount, 5, makingChargeGST]
+          );
+        } catch (mkErr) {
+          throw new Error(`Failed to insert making charge for "${item.item_type}": ${mkErr.message}`);
+        }
+      }
+      
+      // Update totals
+      totalAmount += itemAmount + (itemAmount * 0.03);
+      if (makingChargeAmount > 0) {
+        totalAmount += makingChargeAmount + makingChargeGST;
+      }
+      
+      jewelGSTAmount += itemAmount * 0.03;
+      if (makingChargeAmount > 0) {
+        makingGSTAmount += makingChargeGST;
+      }
     }
     
     // Update total amount

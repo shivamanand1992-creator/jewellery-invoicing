@@ -439,15 +439,25 @@ function CreateInvoice({ token }) {
             {/* Summary */}
             <div style={{ marginBottom: '1.5rem', paddingLeft: '50%', fontSize: '12px' }}>
               {(() => {
-                const jewelSubtotal = items.reduce((sum, item) => {
+                let jewelSubtotal = 0;
+                let totalMakingCharge = 0;
+                
+                items.forEach(item => {
                   let amt = item.use_flat_price ? parseFloat(item.flat_price || 0) : (parseFloat(item.net_weight || 0) * parseFloat(item.selling_price_per_gram || 0));
                   if (!item.use_flat_price && item.gemstone_price) amt += parseFloat(item.gemstone_price);
-                  return sum + amt;
-                }, 0);
+                  
+                  jewelSubtotal += amt;
+                  
+                  // Add per-item making charge
+                  const itemMakingPercent = parseFloat(item.making_charge_percent) || 0;
+                  if (itemMakingPercent > 0) {
+                    totalMakingCharge += (amt * itemMakingPercent) / 100;
+                  }
+                });
+                
                 const jewelGST = jewelSubtotal * 0.03;
-                const makingCharge = jewelSubtotal * 0.10; // 10%
-                const makingGST = makingCharge * 0.05; // 5% on making charge
-                const total = jewelSubtotal + jewelGST + makingCharge + makingGST;
+                const makingGST = totalMakingCharge * 0.05; // 5% on making charge
+                const total = jewelSubtotal + jewelGST + totalMakingCharge + makingGST;
                 
                 return (
                   <>
@@ -460,8 +470,8 @@ function CreateInvoice({ token }) {
                       <span>₹{jewelGST.toFixed(2)}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '0.5rem', borderBottom: '1px solid #ddd' }}>
-                      <span>Making Charge (10%):</span>
-                      <span>₹{makingCharge.toFixed(2)}</span>
+                      <span>Making Charges (Per Item):</span>
+                      <span>₹{totalMakingCharge.toFixed(2)}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', fontWeight: 'bold', color: '#d4af37' }}>
                       <span>GST on Making (5%):</span>
