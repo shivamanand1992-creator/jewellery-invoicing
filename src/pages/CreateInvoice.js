@@ -10,7 +10,7 @@ function CreateInvoice({ token }) {
   const [goldPrice, setGoldPrice] = useState('');
   const [silverPrice, setSilverPrice] = useState('');
   const [items, setItems] = useState([
-    { item_type: 'Gold Ring', description: '', weight: '', purity: '22K', gemstone_price: '', making_charge: '' }
+    { item_type: 'Gold Ring', description: '', weight: '', purity: '22K', gemstone_price: '', making_charge_percent: '' }
   ]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -19,7 +19,7 @@ function CreateInvoice({ token }) {
   const addItem = () => {
     setItems([
       ...items,
-      { item_type: 'Gold Ring', description: '', weight: '', purity: '22K', gemstone_price: '', making_charge: '' }
+      { item_type: 'Gold Ring', description: '', weight: '', purity: '22K', gemstone_price: '', making_charge_percent: '' }
     ]);
   };
 
@@ -54,7 +54,7 @@ function CreateInvoice({ token }) {
             weight: item.weight ? parseFloat(item.weight) : 0,
             purity: item.purity,
             gemstone_price: item.gemstone_price ? parseFloat(item.gemstone_price) : 0,
-            making_charge: item.making_charge ? parseFloat(item.making_charge) : 0
+            making_charge_percent: item.making_charge_percent ? parseFloat(item.making_charge_percent) : 0
           }))
         },
         {
@@ -251,13 +251,13 @@ function CreateInvoice({ token }) {
               )}
 
               <div className="form-group">
-                <label>Making Charge</label>
+                <label>Making Charge (%)</label>
                 <input
                   type="number"
-                  step="0.01"
-                  value={item.making_charge}
-                  onChange={(e) => handleItemChange(index, 'making_charge', e.target.value)}
-                  placeholder="0"
+                  step="0.1"
+                  value={item.making_charge_percent}
+                  onChange={(e) => handleItemChange(index, 'making_charge_percent', e.target.value)}
+                  placeholder="e.g., 7 for 7%"
                   disabled={loading}
                 />
               </div>

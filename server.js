@@ -207,6 +207,30 @@ app.post('/api/invoices', verifyToken, async (req, res) => {
     const invoiceId = result.rows[0].id;
     
     // Calculate and insert items
+    let jewelTotal = 0; // Total jewellery value before making charge
+    
+    // First pass: calculate jewellery totals
+    for (const item of items) {
+      if (item.item_type !== 'Making Charge') {
+        let itemAmount = 0;
+        // Calculate jewellery value
+        if (item.item_type === 'Gold' || item.item_type === 'Gold Ring' || item.item_type.includes('Gold')) {
+          const purityMap = { '22K': 0.916, '20K': 0.833, '18K': 0.75 };
+          const purity = purityMap[item.purity] || 0.916;
+          itemAmount = parseFloat(item.weight) * gold_price * purity;
+        } else if (item.item_type === 'Silver' || item.item_type.includes('Silver')) {
+          itemAmount = parseFloat(item.weight) * silver_price * 0.925;
+        }
+        
+        if (item.gemstone_price) {
+          itemAmount += parseFloat(item.gemstone_price);
+        }
+        
+        jewelTotal += itemAmount;
+      }
+    }
+    
+    // Second pass: insert items and calculate making charge
     for (const item of items) {
       let itemAmount = 0;
       let gstRate = 0;
@@ -234,9 +258,26 @@ app.post('/api/invoices', verifyToken, async (req, res) => {
       const finalAmount = itemAmount + gstAmount;
       totalAmount += finalAmount;
       
+      // Store making_charge_percent if provided
+      const makingChargePercent = item.making_charge_percent || 0;
+      
       await pool.query(
         'INSERT INTO invoice_items (invoice_id, item_type, description, weight, purity, gemstone_price, making_charge, amount, gst_rate, gst_amount) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)',
-        [invoiceId, item.item_type, item.description || '', item.weight || 0, item.purity || '', item.gemstone_price || 0, item.making_charge || 0, itemAmount, gstRate, gstAmount]
+        [invoiceId, item.item_type, item.description || '', item.weight || 0, item.purity || '', item.gemstone_price || 0, makingChargePercent, itemAmount, gstRate, gstAmount]
+      );
+    }
+    
+    // Add making charge based on percentage
+    const makingChargeItem = items.find(i => i.item_type === 'Making Charge' || i.making_charge_percent);
+    if (makingChargeItem && makingChargeItem.making_charge_percent) {
+      const makingChargePercent = parseFloat(makingChargeItem.making_charge_percent);
+      const makingChargeAmount = (jewelTotal * makingChargePercent) / 100;
+      const makingChargeGST = (makingChargeAmount * 5) / 100;
+      totalAmount += makingChargeAmount + makingChargeGST;
+      
+      await pool.query(
+        'INSERT INTO invoice_items (invoice_id, item_type, description, weight, purity, gemstone_price, making_charge, amount, gst_rate, gst_amount) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)',
+        [invoiceId, 'Making Charge', `${makingChargePercent}% Making`, 0, '', 0, makingChargePercent, makingChargeAmount, 5, makingChargeGST]
       );
     }
     
