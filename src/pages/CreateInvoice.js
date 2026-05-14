@@ -505,7 +505,7 @@ function CreateInvoice({ token }) {
                     if (item.gemstone_price) amt += parseFloat(item.gemstone_price);
                   }
                   return sum + (amt + amt * 0.03);
-                }, 0).toFixed(2)}</span>
+                }, 0)).toFixed(2)}</span>
               </div>
             </div>
 
