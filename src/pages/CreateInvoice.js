@@ -470,7 +470,7 @@ function CreateInvoice({ token }) {
                       <span>₹{jewelGST.toFixed(2)}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', paddingBottom: '0.5rem', borderBottom: '1px solid #ddd' }}>
-                      <span>Making Charges (Per Item):</span>
+                      <span>Making Charges:</span>
                       <span>₹{totalMakingCharge.toFixed(2)}</span>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', padding: '0.5rem 0', fontWeight: 'bold', color: '#d4af37' }}>
