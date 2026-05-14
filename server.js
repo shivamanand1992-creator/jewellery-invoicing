@@ -267,8 +267,7 @@ app.post('/api/invoices', verifyToken, async (req, res) => {
     await pool.query(
       'INSERT INTO invoice_items (invoice_id, item_type, description, gross_weight, net_weight, selling_price_per_gram, gemstone_price, making_charge, amount, gst_rate, gst_amount) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)',
       [invoiceId, 'Making Charge', '10% Making Charges', 0, 0, 0, 0, 10, makingChargeAmount, 5, makingChargeGST]
-      );
-    }
+    );
     
     // Update total amount
     await pool.query('UPDATE invoices SET total_amount = $1 WHERE id = $2', [totalAmount, invoiceId]);
@@ -377,8 +376,11 @@ app.get('/api/invoices/:id/pdf', verifyToken, async (req, res) => {
     for (const item of items) {
       doc.fontSize(8).font('Helvetica');
       doc.text(item.description || item.item_type, 50, y);
-      // HSN Code - 7113 for all jewellery
-      const hsn = item.item_type.includes('Making') ? '-' : '7113';
+      // HSN Code - 711319 for gold, 711311 for silver, - for making charge
+      let hsn = '-';
+      if (!item.item_type.includes('Making')) {
+        hsn = item.item_type.includes('Silver') ? '711311' : '711319';
+      }
       doc.text(hsn, 120, y);
       doc.text(item.gross_weight ? item.gross_weight.toString() + 'g' : '-', 145, y);
       doc.text(item.net_weight ? item.net_weight.toString() + 'g' : '-', 195, y);

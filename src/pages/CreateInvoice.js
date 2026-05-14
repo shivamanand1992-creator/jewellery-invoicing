@@ -416,7 +416,9 @@ function CreateInvoice({ token }) {
                   return (
                     <tr key={idx} style={{ borderBottom: '1px solid #ddd' }}>
                       <td style={{ padding: '0.5rem', textAlign: 'left' }}>{item.item_type}</td>
-                      <td style={{ padding: '0.5rem', textAlign: 'center' }}>7113</td>
+                      <td style={{ padding: '0.5rem', textAlign: 'center' }}>
+                        {item.item_type.includes('Silver') ? '711311' : '711319'}
+                      </td>
                       <td style={{ padding: '0.5rem', textAlign: 'right' }}>
                         {item.use_flat_price ? '-' : `${item.gross_weight}g`}
                       </td>
