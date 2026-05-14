@@ -10,7 +10,7 @@ function CreateInvoice({ token }) {
   const [goldPrice, setGoldPrice] = useState('');
   const [silverPrice, setSilverPrice] = useState('');
   const [items, setItems] = useState([
-    { item_type: 'Gold Ring', description: '', weight: '', purity: '22K', gemstone_price: '', making_charge_percent: '' }
+    { item_type: 'Gold Ring', description: '', gross_weight: '', net_weight: '', purity: '22K', gemstone_price: '', making_charge_percent: '' }
   ]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -19,7 +19,7 @@ function CreateInvoice({ token }) {
   const addItem = () => {
     setItems([
       ...items,
-      { item_type: 'Gold Ring', description: '', weight: '', purity: '22K', gemstone_price: '', making_charge_percent: '' }
+      { item_type: 'Gold Ring', description: '', gross_weight: '', net_weight: '', purity: '22K', gemstone_price: '', making_charge_percent: '' }
     ]);
   };
 
@@ -51,7 +51,8 @@ function CreateInvoice({ token }) {
           items: items.map(item => ({
             item_type: item.item_type,
             description: item.description,
-            weight: item.weight ? parseFloat(item.weight) : 0,
+            gross_weight: item.gross_weight ? parseFloat(item.gross_weight) : 0,
+            net_weight: item.net_weight ? parseFloat(item.net_weight) : 0,
             purity: item.purity,
             gemstone_price: item.gemstone_price ? parseFloat(item.gemstone_price) : 0,
             making_charge_percent: item.making_charge_percent ? parseFloat(item.making_charge_percent) : 0
@@ -211,16 +212,29 @@ function CreateInvoice({ token }) {
                 <>
                   <div className="grid">
                     <div className="form-group">
-                      <label>Weight (grams)</label>
+                      <label>Gross Weight (grams)</label>
                       <input
                         type="number"
                         step="0.01"
-                        value={item.weight}
-                        onChange={(e) => handleItemChange(index, 'weight', e.target.value)}
+                        value={item.gross_weight}
+                        onChange={(e) => handleItemChange(index, 'gross_weight', e.target.value)}
                         disabled={loading}
                       />
                     </div>
 
+                    <div className="form-group">
+                      <label>Net Weight (grams)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={item.net_weight}
+                        onChange={(e) => handleItemChange(index, 'net_weight', e.target.value)}
+                        disabled={loading}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid">
                     <div className="form-group">
                       <label>Purity</label>
                       <select
@@ -234,18 +248,18 @@ function CreateInvoice({ token }) {
                         <option>925</option>
                       </select>
                     </div>
-                  </div>
 
-                  <div className="form-group">
-                    <label>Gemstone Price (if any)</label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      value={item.gemstone_price}
-                      onChange={(e) => handleItemChange(index, 'gemstone_price', e.target.value)}
-                      placeholder="0"
-                      disabled={loading}
-                    />
+                    <div className="form-group">
+                      <label>Gemstone Price (if any)</label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        value={item.gemstone_price}
+                        onChange={(e) => handleItemChange(index, 'gemstone_price', e.target.value)}
+                        placeholder="0"
+                        disabled={loading}
+                      />
+                    </div>
                   </div>
                 </>
               )}

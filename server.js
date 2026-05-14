@@ -86,7 +86,8 @@ const initDB = async () => {
         invoice_id INTEGER REFERENCES invoices(id) ON DELETE CASCADE,
         item_type VARCHAR(50),
         description VARCHAR(255),
-        weight DECIMAL(10, 2),
+        gross_weight DECIMAL(10, 3),
+        net_weight DECIMAL(10, 3),
         purity VARCHAR(20),
         gemstone_price DECIMAL(10, 2),
         making_charge DECIMAL(10, 2),
@@ -209,17 +210,17 @@ app.post('/api/invoices', verifyToken, async (req, res) => {
     // Calculate and insert items
     let jewelTotal = 0; // Total jewellery value before making charge
     
-    // First pass: calculate jewellery totals
+    // First pass: calculate jewellery totals using NET WEIGHT
     for (const item of items) {
       if (item.item_type !== 'Making Charge') {
         let itemAmount = 0;
-        // Calculate jewellery value
+        // Calculate jewellery value using NET WEIGHT
         if (item.item_type === 'Gold' || item.item_type === 'Gold Ring' || item.item_type.includes('Gold')) {
           const purityMap = { '22K': 0.916, '20K': 0.833, '18K': 0.75 };
           const purity = purityMap[item.purity] || 0.916;
-          itemAmount = parseFloat(item.weight) * gold_price * purity;
+          itemAmount = parseFloat(item.net_weight) * gold_price * purity;
         } else if (item.item_type === 'Silver' || item.item_type.includes('Silver')) {
-          itemAmount = parseFloat(item.weight) * silver_price * 0.925;
+          itemAmount = parseFloat(item.net_weight) * silver_price * 0.925;
         }
         
         if (item.gemstone_price) {
@@ -240,13 +241,13 @@ app.post('/api/invoices', verifyToken, async (req, res) => {
         itemAmount = parseFloat(item.making_charge) || 0;
       } else {
         gstRate = 3;
-        // Calculate jewellery value
+        // Calculate jewellery value using NET WEIGHT
         if (item.item_type === 'Gold' || item.item_type === 'Gold Ring' || item.item_type.includes('Gold')) {
           const purityMap = { '22K': 0.916, '20K': 0.833, '18K': 0.75 };
           const purity = purityMap[item.purity] || 0.916;
-          itemAmount = parseFloat(item.weight) * gold_price * purity;
+          itemAmount = parseFloat(item.net_weight) * gold_price * purity;
         } else if (item.item_type === 'Silver' || item.item_type.includes('Silver')) {
-          itemAmount = parseFloat(item.weight) * silver_price * 0.925;
+          itemAmount = parseFloat(item.net_weight) * silver_price * 0.925;
         }
         
         if (item.gemstone_price) {
@@ -262,8 +263,8 @@ app.post('/api/invoices', verifyToken, async (req, res) => {
       const makingChargePercent = item.making_charge_percent || 0;
       
       await pool.query(
-        'INSERT INTO invoice_items (invoice_id, item_type, description, weight, purity, gemstone_price, making_charge, amount, gst_rate, gst_amount) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)',
-        [invoiceId, item.item_type, item.description || '', item.weight || 0, item.purity || '', item.gemstone_price || 0, makingChargePercent, itemAmount, gstRate, gstAmount]
+        'INSERT INTO invoice_items (invoice_id, item_type, description, gross_weight, net_weight, purity, gemstone_price, making_charge, amount, gst_rate, gst_amount) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)',
+        [invoiceId, item.item_type, item.description || '', item.gross_weight || 0, item.net_weight || 0, item.purity || '', item.gemstone_price || 0, makingChargePercent, itemAmount, gstRate, gstAmount]
       );
     }
     
@@ -276,8 +277,8 @@ app.post('/api/invoices', verifyToken, async (req, res) => {
       totalAmount += makingChargeAmount + makingChargeGST;
       
       await pool.query(
-        'INSERT INTO invoice_items (invoice_id, item_type, description, weight, purity, gemstone_price, making_charge, amount, gst_rate, gst_amount) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)',
-        [invoiceId, 'Making Charge', `${makingChargePercent}% Making`, 0, '', 0, makingChargePercent, makingChargeAmount, 5, makingChargeGST]
+        'INSERT INTO invoice_items (invoice_id, item_type, description, gross_weight, net_weight, purity, gemstone_price, making_charge, amount, gst_rate, gst_amount) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)',
+        [invoiceId, 'Making Charge', `${makingChargePercent}% Making`, 0, 0, '', 0, makingChargePercent, makingChargeAmount, 5, makingChargeGST]
       );
     }
     
