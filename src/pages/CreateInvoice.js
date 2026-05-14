@@ -201,23 +201,14 @@ function CreateInvoice({ token }) {
           {items.map((item, index) => (
             <div key={index} className="item-row">
               <div className="item-header">
-                <select
+                <input
+                  type="text"
                   value={item.item_type}
                   onChange={(e) => handleItemChange(index, 'item_type', e.target.value)}
-                  className="item-type-select"
+                  placeholder="e.g., Gold Ring, Silver Necklace, Making Charge"
                   disabled={loading}
-                >
-                  <option>Gold Ring</option>
-                  <option>Gold Necklace</option>
-                  <option>Gold Bracelet</option>
-                  <option>Gold Earrings</option>
-                  <option>Gold Pendant</option>
-                  <option>Silver Ring</option>
-                  <option>Silver Necklace</option>
-                  <option>Silver Bracelet</option>
-                  <option>Silver Earrings</option>
-                  <option>Making Charge</option>
-                </select>
+                  style={{ width: '100%', padding: '0.75rem', border: '1px solid #ddd', borderRadius: '4px' }}
+                />
                 {items.length > 1 && (
                   <button
                     type="button"

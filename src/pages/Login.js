@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
+import Logo from '../components/Logo';
 
 // Dynamic API URL - works on localhost and production
 const API_URL = process.env.NODE_ENV === 'production' ? '/api' : 'http://localhost:5000/api';
@@ -52,12 +53,7 @@ function Login({ setToken }) {
       }}>
         {/* Logo/Branding Section */}
         <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-          <img src="/logo.png" alt="S.S. Jewellers" style={{
-            height: '120px',
-            width: 'auto',
-            objectFit: 'contain',
-            marginBottom: '1.5rem'
-          }} />
+          <Logo size="medium" />
         </div>
 
         {error && <div className="error-message">{error}</div>}

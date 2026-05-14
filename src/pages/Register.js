@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
+import Logo from '../components/Logo';
 
 function Register({ setToken }) {
   const [formData, setFormData] = useState({
@@ -61,12 +62,7 @@ function Register({ setToken }) {
       }}>
         {/* Logo/Branding Section */}
         <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-          <img src="/logo.png" alt="S.S. Jewellers" style={{
-            height: '120px',
-            width: 'auto',
-            objectFit: 'contain',
-            marginBottom: '1.5rem'
-          }} />
+          <Logo size="medium" />
         </div>
 
         {error && <div className="error-message">{error}</div>}
