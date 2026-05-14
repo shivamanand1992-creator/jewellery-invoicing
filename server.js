@@ -420,22 +420,14 @@ app.get('/api/invoices/:id/pdf', verifyToken, async (req, res) => {
     res.setHeader('Content-Disposition', `attachment; filename="invoice-${invoice.invoice_number}.pdf"`);
     doc.pipe(res);
     
-    // Add logo image
+    // Add logo image at top
     try {
       doc.image(require('path').join(__dirname, 'public/logo.png'), 50, 20, { width: 80 });
     } catch (err) {
       console.log('Logo image not found, continuing without it');
     }
     
-    // Add logo watermark in the middle of the page (very light/transparent effect)
-    try {
-      // Add the logo image as watermark - positioned in center with reduced opacity via scaling
-      doc.opacity(0.08); // Very light opacity for watermark effect
-      doc.image(require('path').join(__dirname, 'public/logo-watermark.jpg'), 120, 280, { width: 300 });
-      doc.opacity(1); // Reset opacity to normal
-    } catch (err) {
-      console.log('Watermark logo not found, continuing:', err.message);
-    }
+    // Watermark removed temporarily to debug PDF generation issue
     
     // Header with simple text branding
     doc.fontSize(24).font('Helvetica-Bold').fillColor('#000').text('S.S. JEWELLERS', 150, 40);
