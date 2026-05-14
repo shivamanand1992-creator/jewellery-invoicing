@@ -278,10 +278,14 @@ app.post('/api/invoices', verifyToken, async (req, res) => {
       const finalAmount = itemAmount + gstAmount;
       totalAmount += finalAmount;
       
-      await pool.query(
-        'INSERT INTO invoice_items (invoice_id, item_type, description, gross_weight, net_weight, selling_price_per_gram, gemstone_price, making_charge, amount, gst_rate, gst_amount) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)',
-        [invoiceId, item.item_type, item.description || '', item.gross_weight || 0, item.net_weight || 0, item.selling_price_per_gram || 0, item.gemstone_price || 0, 0, itemAmount, gstRate, gstAmount]
-      );
+      try {
+        await pool.query(
+          'INSERT INTO invoice_items (invoice_id, item_type, description, gross_weight, net_weight, selling_price_per_gram, gemstone_price, making_charge, amount, gst_rate, gst_amount) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)',
+          [invoiceId, item.item_type, item.description || '', item.gross_weight || 0, item.net_weight || 0, item.selling_price_per_gram || 0, item.gemstone_price || 0, 0, itemAmount, gstRate, gstAmount]
+        );
+      } catch (itemErr) {
+        throw new Error(`Failed to insert item "${item.item_type}": ${itemErr.message}`);
+      }
     }
     
     // Add automatic 10% making charge on jewelry subtotal (before GST) with 5% GST
@@ -289,13 +293,21 @@ app.post('/api/invoices', verifyToken, async (req, res) => {
     const makingChargeGST = (makingChargeAmount * 5) / 100;
     totalAmount += makingChargeAmount + makingChargeGST;
     
-    await pool.query(
-      'INSERT INTO invoice_items (invoice_id, item_type, description, gross_weight, net_weight, selling_price_per_gram, gemstone_price, making_charge, amount, gst_rate, gst_amount) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)',
-      [invoiceId, 'Making Charge', '10% Making Charges', 0, 0, 0, 0, 10, makingChargeAmount, 5, makingChargeGST]
-    );
+    try {
+      await pool.query(
+        'INSERT INTO invoice_items (invoice_id, item_type, description, gross_weight, net_weight, selling_price_per_gram, gemstone_price, making_charge, amount, gst_rate, gst_amount) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)',
+        [invoiceId, 'Making Charge', '10% Making Charges', 0, 0, 0, 0, 10, makingChargeAmount, 5, makingChargeGST]
+      );
+    } catch (mkErr) {
+      throw new Error(`Failed to insert making charge: ${mkErr.message}`);
+    }
     
     // Update total amount
-    await pool.query('UPDATE invoices SET total_amount = $1 WHERE id = $2', [totalAmount, invoiceId]);
+    try {
+      await pool.query('UPDATE invoices SET total_amount = $1 WHERE id = $2', [totalAmount, invoiceId]);
+    } catch (updateErr) {
+      throw new Error(`Failed to update invoice total: ${updateErr.message}`);
+    }
     
     res.json({ invoiceId, invoiceNumber, totalAmount });
   } catch (err) {
